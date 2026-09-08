@@ -165,20 +165,12 @@ function normalizePrivateKey(
             .trim();
 
 
-    /*
-     * Convert literal \n into real new lines.
-     */
-
     key =
         key.replace(
             /\\n/g,
             "\n"
         );
 
-
-    /*
-     * Remove accidental surrounding quotes.
-     */
 
     if (
 
@@ -206,10 +198,6 @@ function normalizePrivateKey(
 
     }
 
-
-    /*
-     * Normalize line endings.
-     */
 
     key =
         key.replace(
@@ -243,10 +231,6 @@ function pemToArrayBuffer(
             pem
         );
 
-
-    /*
-     * JaaS private key must be PKCS#8.
-     */
 
     if (
         !normalized.includes(
@@ -635,6 +619,66 @@ async function createJWT(
 
 
 /* ============================================================
+   CALL SIGNALING HELPER
+============================================================ */
+
+async function callSignal(
+    request,
+    env,
+    action
+) {
+
+    if (!env.CALL_SIGNAL) {
+
+        return json(
+
+            {
+                error:
+                    "CALL_SIGNAL Durable Object is not configured yet."
+            },
+
+            500
+
+        );
+
+    }
+
+
+    const id =
+        env.CALL_SIGNAL.idFromName(
+            "GLOBAL_CALL_SIGNAL"
+        );
+
+
+    const stub =
+        env.CALL_SIGNAL.get(
+            id
+        );
+
+
+    const url =
+        new URL(
+            request.url
+        );
+
+
+    url.pathname =
+        "/signal/" + action;
+
+
+    return stub.fetch(
+
+        new Request(
+            url.toString(),
+            request
+        )
+
+    );
+
+}
+
+
+/* ============================================================
    REQUEST HANDLER
 ============================================================ */
 
@@ -692,7 +736,10 @@ export default {
                     true,
 
                 service:
-                    "1v1 Video Call"
+                    "1v1 Video Call",
+
+                signaling:
+                    !!env.CALL_SIGNAL
 
             });
 
@@ -747,9 +794,242 @@ export default {
                         ? secret.includes(
                             "BEGIN RSA PRIVATE KEY"
                         )
-                        : false
+                        : false,
+
+                callSignalConfigured:
+                    !!env.CALL_SIGNAL
 
             });
+
+        }
+
+
+        /* ======================================================
+           CREATE CALL
+           
+           Caller -> Receiver
+        ====================================================== */
+
+        if (
+            url.pathname ===
+            "/api/call"
+        ) {
+
+            if (
+                request.method !==
+                "POST"
+            ) {
+
+                return json(
+
+                    {
+                        error:
+                            "Method not allowed."
+                    },
+
+                    405
+
+                );
+
+            }
+
+
+            return callSignal(
+                request,
+                env,
+                "create"
+            );
+
+        }
+
+
+        /* ======================================================
+           POLL INCOMING CALL
+           
+           Receiver checks for new calls.
+        ====================================================== */
+
+        if (
+            url.pathname ===
+            "/api/call/poll"
+        ) {
+
+            if (
+                request.method !==
+                "POST"
+            ) {
+
+                return json(
+
+                    {
+                        error:
+                            "Method not allowed."
+                    },
+
+                    405
+
+                );
+
+            }
+
+
+            return callSignal(
+                request,
+                env,
+                "poll"
+            );
+
+        }
+
+
+        /* ======================================================
+           ACCEPT CALL
+        ====================================================== */
+
+        if (
+            url.pathname ===
+            "/api/call/accept"
+        ) {
+
+            if (
+                request.method !==
+                "POST"
+            ) {
+
+                return json(
+
+                    {
+                        error:
+                            "Method not allowed."
+                    },
+
+                    405
+
+                );
+
+            }
+
+
+            return callSignal(
+                request,
+                env,
+                "accept"
+            );
+
+        }
+
+
+        /* ======================================================
+           DECLINE CALL
+        ====================================================== */
+
+        if (
+            url.pathname ===
+            "/api/call/decline"
+        ) {
+
+            if (
+                request.method !==
+                "POST"
+            ) {
+
+                return json(
+
+                    {
+                        error:
+                            "Method not allowed."
+                    },
+
+                    405
+
+                );
+
+            }
+
+
+            return callSignal(
+                request,
+                env,
+                "decline"
+            );
+
+        }
+
+
+        /* ======================================================
+           CANCEL CALL
+           
+           Caller cancels before receiver accepts.
+        ====================================================== */
+
+        if (
+            url.pathname ===
+            "/api/call/cancel"
+        ) {
+
+            if (
+                request.method !==
+                "POST"
+            ) {
+
+                return json(
+
+                    {
+                        error:
+                            "Method not allowed."
+                    },
+
+                    405
+
+                );
+
+            }
+
+
+            return callSignal(
+                request,
+                env,
+                "cancel"
+            );
+
+        }
+
+
+        /* ======================================================
+           CALL STATUS
+           
+           Caller checks whether receiver accepted/declined.
+        ====================================================== */
+
+        if (
+            url.pathname ===
+            "/api/call/status"
+        ) {
+
+            if (
+                request.method !==
+                "POST"
+            ) {
+
+                return json(
+
+                    {
+                        error:
+                            "Method not allowed."
+                    },
+
+                    405
+
+                );
+
+            }
+
+
+            return callSignal(
+                request,
+                env,
+                "status"
+            );
 
         }
 
@@ -1000,3 +1280,842 @@ export default {
     }
 
 };
+
+
+/* ============================================================
+   DURABLE OBJECT
+   ============================================================
+
+   Handles:
+
+   - Create incoming call
+   - Poll incoming calls
+   - Accept
+   - Decline
+   - Cancel
+   - Status
+
+   D1 မလိုပါ။
+   Durable Object SQLite storage ကိုပဲ အသုံးပြုထားပါတယ်။
+============================================================ */
+
+export class CallSignal {
+
+    constructor(
+        state,
+        env
+    ) {
+
+        this.state =
+            state;
+
+        this.env =
+            env;
+
+    }
+
+
+    /* ========================================================
+       CLEAN OLD CALLS
+    ======================================================== */
+
+    async cleanup() {
+
+        const now =
+            Date.now();
+
+
+        const entries =
+            await this.state.storage.list({
+                prefix:
+                    "call:"
+            });
+
+
+        for (
+            const [key, call]
+            of entries
+        ) {
+
+            if (
+                !call ||
+                !call.createdAt ||
+                now - call.createdAt >
+                    (5 * 60 * 1000)
+            ) {
+
+                await this.state.storage.delete(
+                    key
+                );
+
+            }
+
+        }
+
+    }
+
+
+    /* ========================================================
+       READ BODY
+    ======================================================== */
+
+    async readBody(
+        request
+    ) {
+
+        try {
+
+            return await request.json();
+
+        } catch (_) {
+
+            return null;
+
+        }
+
+    }
+
+
+    /* ========================================================
+       VALIDATE ID
+    ======================================================== */
+
+    validId(
+        value
+    ) {
+
+        return (
+
+            typeof value ===
+            "string"
+
+            &&
+
+            value.length >= 3
+
+            &&
+
+            value.length <= 100
+
+            &&
+
+            /^[a-zA-Z0-9_-]+$/.test(
+                value
+            )
+
+        );
+
+    }
+
+
+    /* ========================================================
+       FETCH
+    ======================================================== */
+
+    async fetch(
+        request
+    ) {
+
+        const url =
+            new URL(
+                request.url
+            );
+
+
+        const action =
+            url.pathname
+                .replace(
+                    "/signal/",
+                    ""
+                );
+
+
+        await this.cleanup();
+
+
+        /* ======================================================
+           CREATE
+        ====================================================== */
+
+        if (
+            action ===
+            "create"
+        ) {
+
+            const body =
+                await this.readBody(
+                    request
+                );
+
+
+            if (!body) {
+
+                return json(
+                    {
+                        error:
+                            "Invalid JSON."
+                    },
+                    400
+                );
+
+            }
+
+
+            const callerId =
+                String(
+                    body.callerId ||
+                    ""
+                ).trim();
+
+
+            const callerName =
+                String(
+                    body.callerName ||
+                    ""
+                )
+                    .trim()
+                    .slice(
+                        0,
+                        40
+                    );
+
+
+            const receiverId =
+                String(
+                    body.receiverId ||
+                    ""
+                ).trim();
+
+
+            const receiverName =
+                String(
+                    body.receiverName ||
+                    ""
+                )
+                    .trim()
+                    .slice(
+                        0,
+                        40
+                    );
+
+
+            const room =
+                String(
+                    body.room ||
+                    ""
+                )
+                    .trim()
+                    .replace(
+                        /[^a-zA-Z0-9_-]/g,
+                        ""
+                    )
+                    .slice(
+                        0,
+                        40
+                    );
+
+
+            if (
+                !this.validId(
+                    callerId
+                )
+            ) {
+
+                return json(
+                    {
+                        error:
+                            "Invalid callerId."
+                    },
+                    400
+                );
+
+            }
+
+
+            if (
+                !callerName
+            ) {
+
+                return json(
+                    {
+                        error:
+                            "Caller name is required."
+                    },
+                    400
+                );
+
+            }
+
+
+            if (
+                !this.validId(
+                    receiverId
+                )
+            ) {
+
+                return json(
+                    {
+                        error:
+                            "Invalid receiverId."
+                    },
+                    400
+                );
+
+            }
+
+
+            if (
+                !room
+            ) {
+
+                return json(
+                    {
+                        error:
+                            "Room is required."
+                    },
+                    400
+                );
+
+            }
+
+
+            if (
+                callerId ===
+                receiverId
+            ) {
+
+                return json(
+                    {
+                        error:
+                            "You cannot call yourself."
+                    },
+                    400
+                );
+
+            }
+
+
+            const callId =
+                crypto.randomUUID();
+
+
+            const call = {
+
+                callId:
+                    callId,
+
+                callerId:
+                    callerId,
+
+                callerName:
+                    callerName,
+
+                receiverId:
+                    receiverId,
+
+                receiverName:
+                    receiverName,
+
+                room:
+                    room,
+
+                status:
+                    "ringing",
+
+                createdAt:
+                    Date.now(),
+
+                updatedAt:
+                    Date.now()
+
+            };
+
+
+            await this.state.storage.put(
+
+                "call:" +
+                callId,
+
+                call
+
+            );
+
+
+            return json({
+
+                ok:
+                    true,
+
+                call:
+                    call
+
+            });
+
+        }
+
+
+        /* ======================================================
+           POLL
+        ====================================================== */
+
+        if (
+            action ===
+            "poll"
+        ) {
+
+            const body =
+                await this.readBody(
+                    request
+                );
+
+
+            if (!body) {
+
+                return json(
+                    {
+                        error:
+                            "Invalid JSON."
+                    },
+                    400
+                );
+
+            }
+
+
+            const userId =
+                String(
+                    body.userId ||
+                    ""
+                ).trim();
+
+
+            if (
+                !this.validId(
+                    userId
+                )
+            ) {
+
+                return json(
+                    {
+                        error:
+                            "Invalid userId."
+                    },
+                    400
+                );
+
+            }
+
+
+            const entries =
+                await this.state.storage.list({
+                    prefix:
+                        "call:"
+                });
+
+
+            const calls = [];
+
+
+            for (
+                const [, call]
+                of entries
+            ) {
+
+                if (
+                    call &&
+                    call.receiverId ===
+                        userId &&
+
+                    call.status ===
+                        "ringing"
+                ) {
+
+                    calls.push(
+                        call
+                    );
+
+                }
+
+            }
+
+
+            calls.sort(
+                (
+                    a,
+                    b
+                ) =>
+                    a.createdAt -
+                    b.createdAt
+            );
+
+
+            return json({
+
+                ok:
+                    true,
+
+                calls:
+                    calls
+
+            });
+
+        }
+
+
+        /* ======================================================
+           FIND CALL
+        ====================================================== */
+
+        if (
+            action ===
+            "accept" ||
+
+            action ===
+            "decline" ||
+
+            action ===
+            "cancel" ||
+
+            action ===
+            "status"
+        ) {
+
+            const body =
+                await this.readBody(
+                    request
+                );
+
+
+            if (!body) {
+
+                return json(
+                    {
+                        error:
+                            "Invalid JSON."
+                    },
+                    400
+                );
+
+            }
+
+
+            const callId =
+                String(
+                    body.callId ||
+                    ""
+                ).trim();
+
+
+            const userId =
+                String(
+                    body.userId ||
+                    ""
+                ).trim();
+
+
+            if (
+                !this.validId(
+                    callId.replace(
+                        /-/g,
+                        ""
+                    )
+                )
+            ) {
+
+                return json(
+                    {
+                        error:
+                            "Invalid callId."
+                    },
+                    400
+                );
+
+            }
+
+
+            if (
+                !this.validId(
+                    userId
+                )
+            ) {
+
+                return json(
+                    {
+                        error:
+                            "Invalid userId."
+                    },
+                    400
+                );
+
+            }
+
+
+            const key =
+                "call:" +
+                callId;
+
+
+            const call =
+                await this.state.storage.get(
+                    key
+                );
+
+
+            if (!call) {
+
+                return json(
+                    {
+                        error:
+                            "Call not found."
+                    },
+                    404
+                );
+
+            }
+
+
+            /* ==================================================
+               STATUS
+            ================================================== */
+
+            if (
+                action ===
+                "status"
+            ) {
+
+                if (
+                    userId !==
+                        call.callerId &&
+
+                    userId !==
+                        call.receiverId
+                ) {
+
+                    return json(
+                        {
+                            error:
+                                "Not authorized."
+                        },
+                        403
+                    );
+
+                }
+
+
+                return json({
+
+                    ok:
+                        true,
+
+                    call:
+                        call
+
+                });
+
+            }
+
+
+            /* ==================================================
+               ACCEPT
+            ================================================== */
+
+            if (
+                action ===
+                "accept"
+            ) {
+
+                if (
+                    userId !==
+                    call.receiverId
+                ) {
+
+                    return json(
+                        {
+                            error:
+                                "Only receiver can accept."
+                        },
+                        403
+                    );
+
+                }
+
+
+                if (
+                    call.status !==
+                    "ringing"
+                ) {
+
+                    return json({
+
+                        ok:
+                            true,
+
+                        call:
+                            call
+
+                    });
+
+                }
+
+
+                call.status =
+                    "accepted";
+
+
+                call.updatedAt =
+                    Date.now();
+
+
+                await this.state.storage.put(
+                    key,
+                    call
+                );
+
+
+                return json({
+
+                    ok:
+                        true,
+
+                    call:
+                        call
+
+                });
+
+            }
+
+
+            /* ==================================================
+               DECLINE
+            ================================================== */
+
+            if (
+                action ===
+                "decline"
+            ) {
+
+                if (
+                    userId !==
+                    call.receiverId
+                ) {
+
+                    return json(
+                        {
+                            error:
+                                "Only receiver can decline."
+                        },
+                        403
+                    );
+
+                }
+
+
+                if (
+                    call.status ===
+                    "ringing"
+                ) {
+
+                    call.status =
+                        "declined";
+
+
+                    call.updatedAt =
+                        Date.now();
+
+
+                    await this.state.storage.put(
+                        key,
+                        call
+                    );
+
+                }
+
+
+                return json({
+
+                    ok:
+                        true,
+
+                    call:
+                        call
+
+                });
+
+            }
+
+
+            /* ==================================================
+               CANCEL
+            ================================================== */
+
+            if (
+                action ===
+                "cancel"
+            ) {
+
+                if (
+                    userId !==
+                    call.callerId
+                ) {
+
+                    return json(
+                        {
+                            error:
+                                "Only caller can cancel."
+                        },
+                        403
+                    );
+
+                }
+
+
+                if (
+                    call.status ===
+                    "ringing"
+                ) {
+
+                    call.status =
+                        "cancelled";
+
+
+                    call.updatedAt =
+                        Date.now();
+
+
+                    await this.state.storage.put(
+                        key,
+                        call
+                    );
+
+                }
+
+
+                return json({
+
+                    ok:
+                        true,
+
+                    call:
+                        call
+
+                });
+
+            }
+
+        }
+
+
+        return json(
+
+            {
+                error:
+                    "Unknown signaling action."
+            },
+
+            404
+
+        );
+
+    }
+
+}
