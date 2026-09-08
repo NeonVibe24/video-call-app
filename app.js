@@ -1,119 +1,120 @@
 "use strict";
 
+
 /* ============================================================
-DOM
+   DOM
 ============================================================ */
 
 const homeScreen =
-document.getElementById("homeScreen");
+    document.getElementById("homeScreen");
 
 const callScreen =
-document.getElementById("callScreen");
+    document.getElementById("callScreen");
 
 const nameInput =
-document.getElementById("nameInput");
+    document.getElementById("nameInput");
 
 const backButton =
-document.getElementById("backButton");
+    document.getElementById("backButton");
 
 const roomLabel =
-document.getElementById("roomLabel");
+    document.getElementById("roomLabel");
 
 const meet =
-document.getElementById("meet");
+    document.getElementById("meet");
 
 const onlineUsers =
-document.getElementById("onlineUsers");
+    document.getElementById("onlineUsers");
 
 const onlineCount =
-document.getElementById("onlineCount");
+    document.getElementById("onlineCount");
 
 const refreshUsersButton =
-document.getElementById("refreshUsersButton");
+    document.getElementById("refreshUsersButton");
 
 const noUsersMessage =
-document.getElementById("noUsersMessage");
+    document.getElementById("noUsersMessage");
 
 const connectionStatus =
-document.getElementById("connectionStatus");
+    document.getElementById("connectionStatus");
+
 
 /* ============================================================
-INCOMING CALL UI
+   INCOMING CALL
 ============================================================ */
 
 const incomingCallOverlay =
-document.getElementById(
-"incomingCallOverlay"
-);
+    document.getElementById(
+        "incomingCallOverlay"
+    );
 
 const incomingCallerName =
-document.getElementById(
-"incomingCallerName"
-);
+    document.getElementById(
+        "incomingCallerName"
+    );
 
 const declineCallButton =
-document.getElementById(
-"declineCallButton"
-);
+    document.getElementById(
+        "declineCallButton"
+    );
 
 const acceptCallButton =
-document.getElementById(
-"acceptCallButton"
-);
+    document.getElementById(
+        "acceptCallButton"
+    );
+
 
 /* ============================================================
-OUTGOING CALL UI
+   OUTGOING CALL
 ============================================================ */
 
 const callingOverlay =
-document.getElementById(
-"callingOverlay"
-);
+    document.getElementById(
+        "callingOverlay"
+    );
 
 const callingReceiverName =
-document.getElementById(
-"callingReceiverName"
-);
+    document.getElementById(
+        "callingReceiverName"
+    );
 
 const cancelCallButton =
-document.getElementById(
-"cancelCallButton"
-);
+    document.getElementById(
+        "cancelCallButton"
+    );
+
 
 /* ============================================================
-API
+   API
 ============================================================ */
 
 const API = "/api";
 
+
 /* ============================================================
-JAAS
+   JAAS
 ============================================================ */
 
-const JAAS_DOMAIN =
-"8x8.vc";
+const JAAS_DOMAIN = "8x8.vc";
 
 let jitsiApi = null;
 
+
 /* ============================================================
-USER STATE
+   STATE
 ============================================================ */
 
 let currentName = "";
+
+let currentRoom = "";
 
 let currentCallId = "";
 
 let currentCallRole = "";
 
-let currentRoom = "";
-
 let currentReceiverId = "";
 
 let currentReceiverName = "";
-
-/* ============================================================
-CALL STATE
-============================================================ */
 
 let incomingCall = null;
 
@@ -123,10 +124,6 @@ let callStatusTimer = null;
 
 let incomingCallTimer = null;
 
-/* ============================================================
-PRESENCE STATE
-============================================================ */
-
 let presenceTimer = null;
 
 let onlineUsersTimer = null;
@@ -135,497 +132,492 @@ let presenceBusy = false;
 
 let usersPollBusy = false;
 
-let nameUpdateTimer = null;
-
-/* ============================================================
-JITSI STATE
-============================================================ */
-
 let leavingJitsi = false;
 
+let nameUpdateTimer = null;
+
+
 /* ============================================================
-INTERNAL USER ID
+   USER ID
 ============================================================ */
 
 function getUserId() {
 
-let userId = "";
+    let userId = "";
 
-try {
+    try {
+
+        userId =
+            localStorage.getItem(
+                "video_call_user_id"
+            ) || "";
+
+    } catch (_) {}
+
 
     userId =
-        localStorage.getItem(
-            "video_call_user_id"
-        ) || "";
-
-} catch (_) {}
+        String(userId).trim();
 
 
-userId =
-    String(userId).trim();
+    if (!userId) {
+
+        if (
+            typeof crypto !== "undefined" &&
+            typeof crypto.randomUUID ===
+                "function"
+        ) {
+
+            userId =
+                crypto.randomUUID();
+
+        } else {
+
+            userId =
+                "user-" +
+                Date.now().toString(36) +
+                "-" +
+                Math.random()
+                    .toString(36)
+                    .slice(2, 12);
+        }
 
 
-if (!userId) {
+        try {
 
-    if (
-        typeof crypto !== "undefined" &&
-        typeof crypto.randomUUID === "function"
-    ) {
+            localStorage.setItem(
+                "video_call_user_id",
+                userId
+            );
 
-        userId =
-            crypto.randomUUID();
-
-    } else {
-
-        userId =
-            "user-" +
-            Date.now().toString(36) +
-            "-" +
-            Math.random()
-                .toString(36)
-                .slice(2, 12);
+        } catch (_) {}
     }
+
+
+    return userId;
+}
+
+
+const myUserId =
+    getUserId();
+
+
+/* ============================================================
+   NAME
+============================================================ */
+
+function saveMyName(name) {
+
+    const value =
+        String(name || "").trim();
 
 
     try {
 
         localStorage.setItem(
-            "video_call_user_id",
-            userId
+            "video_call_name",
+            value
         );
 
     } catch (_) {}
 }
 
 
-return userId;
-
-}
-
-const myUserId =
-getUserId();
-
-/* ============================================================
-NAME STORAGE
-============================================================ */
-
-function saveMyName(name) {
-
-const value =
-    String(name || "").trim();
-
-
-try {
-
-    localStorage.setItem(
-        "video_call_name",
-        value
-    );
-
-} catch (_) {}
-
-}
-
 function loadMyName() {
 
-try {
+    try {
 
-    const saved =
-        localStorage.getItem(
-            "video_call_name"
-        ) || "";
+        const saved =
+            localStorage.getItem(
+                "video_call_name"
+            ) || "";
 
 
-    if (
-        saved &&
-        nameInput &&
-        !nameInput.value
-    ) {
+        if (
+            saved &&
+            nameInput &&
+            !nameInput.value
+        ) {
 
-        nameInput.value =
-            saved;
-    }
+            nameInput.value =
+                saved;
+        }
 
-} catch (_) {}
-
+    } catch (_) {}
 }
 
-/* ============================================================
-NAME
-============================================================ */
 
 function getMyName() {
 
-return String(
-    nameInput
-        ? nameInput.value
-        : ""
-).trim();
-
+    return String(
+        nameInput
+            ? nameInput.value
+            : ""
+    ).trim();
 }
+
 
 function getInitial(name) {
 
-const value =
-    String(name || "").trim();
+    const value =
+        String(name || "").trim();
 
 
-if (!value) {
+    if (!value) {
+        return "?";
+    }
 
-    return "?";
+
+    return value
+        .charAt(0)
+        .toUpperCase();
 }
 
-
-return value
-    .charAt(0)
-    .toUpperCase();
-
-}
 
 /* ============================================================
-CONNECTION STATUS
+   STATUS
 ============================================================ */
 
 function setConnectionStatus(text) {
 
-if (connectionStatus) {
+    if (connectionStatus) {
 
-    connectionStatus.textContent =
-        text;
+        connectionStatus.textContent =
+            text;
+    }
 }
 
-}
 
 /* ============================================================
-API REQUEST
+   API
 ============================================================ */
 
 async function apiRequest(
-path,
-body,
-options = {}
+    path,
+    body,
+    options = {}
 ) {
 
-const fetchOptions = {
+    const fetchOptions = {
 
-    method: "POST",
+        method: "POST",
 
-    headers: {
+        headers: {
 
-        "Content-Type":
-            "application/json",
+            "Content-Type":
+                "application/json",
 
-        "Accept":
-            "application/json"
-    },
+            "Accept":
+                "application/json"
+        },
 
-    body:
-        JSON.stringify(
-            body || {}
-        )
-};
-
-
-if (options.keepalive) {
-
-    fetchOptions.keepalive =
-        true;
-}
+        body:
+            JSON.stringify(
+                body || {}
+            )
+    };
 
 
-let response;
+    if (options.keepalive) {
+
+        fetchOptions.keepalive =
+            true;
+    }
 
 
-try {
+    let response;
 
-    response =
-        await fetch(
-            API + path,
-            fetchOptions
+
+    try {
+
+        response =
+            await fetch(
+                API + path,
+                fetchOptions
+            );
+
+    } catch (error) {
+
+        console.error(
+            "FETCH ERROR:",
+            path,
+            error
         );
 
-} catch (error) {
+        throw new Error(
+            "Network connection failed."
+        );
+    }
 
-    console.error(
-        "FETCH ERROR:",
-        path,
-        error
-    );
 
-    throw new Error(
-        "Network connection failed."
-    );
+    let data = {};
+
+
+    try {
+
+        data =
+            await response.json();
+
+    } catch (_) {}
+
+
+    if (!response.ok) {
+
+        throw new Error(
+            data.error ||
+            data.message ||
+            (
+                "Request failed (" +
+                response.status +
+                ")."
+            )
+        );
+    }
+
+
+    return data;
 }
 
-
-let data = {};
-
-
-try {
-
-    data =
-        await response.json();
-
-} catch (_) {}
-
-
-if (!response.ok) {
-
-    throw new Error(
-        data.error ||
-        data.message ||
-        (
-            "Request failed (" +
-            response.status +
-            ")."
-        )
-    );
-}
-
-
-return data;
-
-}
 
 /* ============================================================
-ONLINE PRESENCE
+   AUTO ROOM
+   User never sees this.
+============================================================ */
+
+function generatePrivateRoom() {
+
+    const chars =
+        "abcdefghijklmnopqrstuvwxyz" +
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+        "0123456789";
+
+    let result = "";
+
+
+    for (
+        let i = 0;
+        i < 20;
+        i++
+    ) {
+
+        result +=
+            chars.charAt(
+                Math.floor(
+                    Math.random() *
+                    chars.length
+                )
+            );
+    }
+
+
+    return (
+        "call-" +
+        result
+    );
+}
+
+
+/* ============================================================
+   ONLINE PRESENCE
 ============================================================ */
 
 async function registerPresence() {
 
-const name =
-    getMyName();
+    const name =
+        getMyName();
 
 
-if (!name) {
-
-    setConnectionStatus(
-        "Offline"
-    );
-
-    renderOnlineUsers([]);
-
-    return false;
-}
-
-
-saveMyName(name);
-
-
-if (presenceBusy) {
-
-    return true;
-}
-
-
-presenceBusy =
-    true;
-
-
-try {
-
-    const data =
-        await apiRequest(
-            "/presence/online",
-            {
-                userId:
-                    myUserId,
-
-                name:
-                    name
-            }
-        );
-
-
-    if (
-        data &&
-        data.ok
-    ) {
+    if (!name) {
 
         setConnectionStatus(
-            "Online"
+            "Offline"
         );
 
-    } else {
+        renderOnlineUsers([]);
+
+        return false;
+    }
+
+
+    saveMyName(name);
+
+
+    if (presenceBusy) {
+        return true;
+    }
+
+
+    presenceBusy = true;
+
+
+    try {
+
+        const data =
+            await apiRequest(
+                "/presence/online",
+                {
+                    userId:
+                        myUserId,
+
+                    name:
+                        name
+                }
+            );
+
+
+        if (data && data.ok) {
+
+            setConnectionStatus(
+                "Online"
+            );
+
+            return true;
+        }
+
 
         setConnectionStatus(
             "Reconnecting..."
         );
+
+
+        return false;
+
+    } catch (error) {
+
+        console.error(
+            "Presence error:",
+            error
+        );
+
+        setConnectionStatus(
+            "Reconnecting..."
+        );
+
+        return false;
+
+    } finally {
+
+        presenceBusy = false;
     }
-
-
-    return true;
-
-} catch (error) {
-
-    console.error(
-        "Presence online error:",
-        error
-    );
-
-
-    setConnectionStatus(
-        "Reconnecting..."
-    );
-
-
-    return false;
-
-} finally {
-
-    presenceBusy =
-        false;
 }
 
-}
 
 /* ============================================================
-POLL ONLINE USERS
+   POLL USERS
 ============================================================ */
 
 async function pollOnlineUsers() {
 
-const name =
-    getMyName();
+    if (!getMyName()) {
+
+        renderOnlineUsers([]);
+
+        return;
+    }
 
 
-if (!name) {
-
-    renderOnlineUsers([]);
-
-    return;
-}
+    if (usersPollBusy) {
+        return;
+    }
 
 
-if (usersPollBusy) {
-
-    return;
-}
+    usersPollBusy = true;
 
 
-usersPollBusy =
-    true;
+    try {
 
-
-try {
-
-    const data =
-        await apiRequest(
-            "/presence/poll",
-            {
-                userId:
-                    myUserId
-            }
-        );
-
-
-    let users =
-        Array.isArray(
-            data.users
-        )
-            ? data.users
-            : [];
-
-
-    users =
-        users.filter(
-            user => {
-
-                if (!user) {
-
-                    return false;
+        const data =
+            await apiRequest(
+                "/presence/poll",
+                {
+                    userId:
+                        myUserId
                 }
+            );
 
 
-                return String(
-                    user.userId || ""
-                ) !== myUserId;
-            }
+        let users =
+            Array.isArray(data.users)
+                ? data.users
+                : [];
+
+
+        users =
+            users.filter(
+                user =>
+                    user &&
+                    String(
+                        user.userId || ""
+                    ) !== myUserId
+            );
+
+
+        renderOnlineUsers(users);
+
+    } catch (error) {
+
+        console.error(
+            "Online users error:",
+            error
         );
 
+    } finally {
 
-    renderOnlineUsers(
-        users
-    );
-
-} catch (error) {
-
-    console.error(
-        "Online users error:",
-        error
-    );
-
-} finally {
-
-    usersPollBusy =
-        false;
+        usersPollBusy = false;
+    }
 }
 
-}
 
 /* ============================================================
-RENDER ONLINE USERS
+   RENDER USERS
 ============================================================ */
 
 function renderOnlineUsers(users) {
 
-if (!onlineUsers) {
-
-    return;
-}
-
-
-onlineUsers.innerHTML =
-    "";
-
-
-const list =
-    Array.isArray(users)
-        ? users.filter(
-            user =>
-                user &&
-                user.userId &&
-                String(
-                    user.userId
-                ) !== myUserId
-          )
-        : [];
-
-
-if (onlineCount) {
-
-    onlineCount.textContent =
-        String(
-            list.length
-        );
-}
-
-
-if (list.length === 0) {
-
-    if (noUsersMessage) {
-
-        noUsersMessage.style.display =
-            "flex";
-
-        onlineUsers.appendChild(
-            noUsersMessage
-        );
+    if (!onlineUsers) {
+        return;
     }
 
-    return;
-}
+
+    onlineUsers.innerHTML = "";
 
 
-if (noUsersMessage) {
+    const list =
+        Array.isArray(users)
+            ? users.filter(
+                user =>
+                    user &&
+                    user.userId &&
+                    String(
+                        user.userId
+                    ) !== myUserId
+            )
+            : [];
 
-    noUsersMessage.style.display =
-        "none";
-}
+
+    if (onlineCount) {
+
+        onlineCount.textContent =
+            String(list.length);
+    }
 
 
-list.forEach(
-    user => {
+    if (list.length === 0) {
+
+        if (noUsersMessage) {
+
+            noUsersMessage.style.display =
+                "flex";
+
+            onlineUsers.appendChild(
+                noUsersMessage
+            );
+        }
+
+        return;
+    }
+
+
+    list.forEach(user => {
 
         const userId =
             String(
@@ -648,10 +640,6 @@ list.forEach(
             "busy";
 
 
-        /* -----------------------------------------
-           USER ITEM
-        ----------------------------------------- */
-
         const item =
             document.createElement(
                 "div"
@@ -661,10 +649,6 @@ list.forEach(
         item.className =
             "online-user-item";
 
-
-        /* -----------------------------------------
-           USER INFO
-        ----------------------------------------- */
 
         const info =
             document.createElement(
@@ -698,17 +682,17 @@ list.forEach(
             );
 
 
-        const userNameElement =
+        const name =
             document.createElement(
                 "div"
             );
 
 
-        userNameElement.className =
+        name.className =
             "online-user-name";
 
 
-        userNameElement.textContent =
+        name.textContent =
             userName;
 
 
@@ -722,14 +706,6 @@ list.forEach(
             "online-user-status";
 
 
-        if (isBusy) {
-
-            status.classList.add(
-                "busy"
-            );
-        }
-
-
         const dot =
             document.createElement(
                 "span"
@@ -740,651 +716,669 @@ list.forEach(
             "online-status-dot";
 
 
-        if (isBusy) {
-
-            dot.classList.add(
-                "busy"
-            );
-        }
-
-
         const statusText =
             document.createElement(
                 "span"
             );
 
 
-        statusText.textContent =
-            isBusy
-                ? "Busy"
-                : "Online";
+        if (isBusy) {
+
+            status.classList.add(
+                "busy"
+            );
+
+            dot.classList.add(
+                "busy"
+            );
+
+            statusText.textContent =
+                "Busy";
+
+        } else {
+
+            statusText.textContent =
+                "Online";
+        }
 
 
-        status.appendChild(
-            dot
-        );
+        status.appendChild(dot);
 
         status.appendChild(
             statusText
         );
 
 
-        details.appendChild(
-            userNameElement
-        );
+        details.appendChild(name);
 
-        details.appendChild(
-            status
-        );
+        details.appendChild(status);
 
 
-        info.appendChild(
-            avatar
-        );
+        info.appendChild(avatar);
 
-        info.appendChild(
-            details
-        );
+        info.appendChild(details);
 
 
-        /* -----------------------------------------
-           CALL BUTTON
-        ----------------------------------------- */
-
-        const callButton =
+        const button =
             document.createElement(
                 "button"
             );
 
 
-        callButton.type =
+        button.type =
             "button";
 
 
-        callButton.className =
+        button.className =
             "online-call-button";
 
 
-        callButton.dataset.userId =
+        button.dataset.userId =
             userId;
 
 
-        callButton.dataset.userName =
+        button.dataset.userName =
             userName;
 
 
-        callButton.textContent =
+        button.textContent =
             isBusy
                 ? "Busy"
                 : "Call";
 
 
-        /*
-         * Busy users are still clickable.
-         * Backend will decide if call is allowed.
-         */
-
-        callButton.disabled =
-            false;
-
-
         if (isBusy) {
 
-            callButton.classList.add(
+            button.classList.add(
                 "busy"
             );
         }
 
 
-        item.appendChild(
-            info
-        );
+        item.appendChild(info);
 
-        item.appendChild(
-            callButton
-        );
+        item.appendChild(button);
 
-
-        onlineUsers.appendChild(
-            item
-        );
-    }
-);
-
+        onlineUsers.appendChild(item);
+    });
 }
 
+
 /* ============================================================
-CALL BUTTON
+   CALL BUTTON
 ============================================================ */
 
 if (onlineUsers) {
 
-onlineUsers.addEventListener(
-    "click",
-    event => {
+    onlineUsers.addEventListener(
+        "click",
+        event => {
 
-        const button =
-            event.target.closest(
-                ".online-call-button"
+            const button =
+                event.target.closest(
+                    ".online-call-button"
+                );
+
+
+            if (!button) {
+                return;
+            }
+
+
+            event.preventDefault();
+            event.stopPropagation();
+
+
+            const receiverId =
+                String(
+                    button.dataset.userId ||
+                    ""
+                ).trim();
+
+
+            const receiverName =
+                String(
+                    button.dataset.userName ||
+                    "User"
+                ).trim();
+
+
+            if (!receiverId) {
+
+                alert(
+                    "This user is unavailable."
+                );
+
+                return;
+            }
+
+
+            if (
+                receiverId ===
+                myUserId
+            ) {
+
+                return;
+            }
+
+
+            callUser(
+                receiverId,
+                receiverName
             );
-
-
-        if (!button) {
-
-            return;
         }
-
-
-        event.preventDefault();
-
-        event.stopPropagation();
-
-
-        const receiverId =
-            String(
-                button.dataset.userId ||
-                ""
-            ).trim();
-
-
-        const receiverName =
-            String(
-                button.dataset.userName ||
-                "User"
-            ).trim();
-
-
-        console.log(
-            "CALL BUTTON CLICKED"
-        );
-
-
-        console.log(
-            "Receiver ID:",
-            receiverId
-        );
-
-
-        console.log(
-            "Receiver Name:",
-            receiverName
-        );
-
-
-        if (!receiverId) {
-
-            alert(
-                "This user is unavailable."
-            );
-
-            return;
-        }
-
-
-        if (
-            receiverId ===
-            myUserId
-        ) {
-
-            return;
-        }
-
-
-        callUser(
-            receiverId,
-            receiverName
-        );
-    }
-);
-
+    );
 }
 
+
 /* ============================================================
-REFRESH
+   REFRESH
 ============================================================ */
 
 async function refreshOnlineUsers() {
 
-await registerPresence();
+    await registerPresence();
 
-await pollOnlineUsers();
-
+    await pollOnlineUsers();
 }
 
-window.refreshOnlineUsers =
-refreshOnlineUsers;
 
 if (refreshUsersButton) {
 
-refreshUsersButton.addEventListener(
-    "click",
-    async event => {
+    refreshUsersButton.addEventListener(
+        "click",
+        async event => {
 
-        event.preventDefault();
-
-
-        refreshUsersButton.disabled =
-            true;
+            event.preventDefault();
 
 
-        try {
+            refreshUsersButton.disabled =
+                true;
 
-            await refreshOnlineUsers();
 
-        } finally {
+            try {
 
-            setTimeout(
-                () => {
+                await refreshOnlineUsers();
 
-                    refreshUsersButton.disabled =
-                        false;
+            } finally {
 
-                },
-                500
-            );
+                setTimeout(
+                    () => {
+
+                        refreshUsersButton.disabled =
+                            false;
+
+                    },
+                    500
+                );
+            }
         }
-    }
-);
-
+    );
 }
 
+
 /* ============================================================
-UPDATE PRESENCE
+   NAME CHANGE
 ============================================================ */
 
 async function updateMyPresence() {
 
-const name =
-    getMyName();
+    const name =
+        getMyName();
 
 
-if (!name) {
+    if (!name) {
 
-    try {
+        try {
 
-        localStorage.removeItem(
-            "video_call_name"
-        );
-
-    } catch (_) {}
-
-
-    renderOnlineUsers([]);
-
-    setConnectionStatus(
-        "Offline"
-    );
-
-    return;
-}
-
-
-saveMyName(name);
-
-await registerPresence();
-
-await pollOnlineUsers();
-
-}
-
-/* ============================================================
-NAME INPUT
-============================================================ */
-
-if (nameInput) {
-
-nameInput.addEventListener(
-    "input",
-    () => {
-
-        clearTimeout(
-            nameUpdateTimer
-        );
-
-
-        nameUpdateTimer =
-            setTimeout(
-                updateMyPresence,
-                500
-            );
-    }
-);
-
-
-nameInput.addEventListener(
-    "change",
-    updateMyPresence
-);
-
-
-nameInput.addEventListener(
-    "blur",
-    updateMyPresence
-);
-
-}
-
-/* ============================================================
-START PRESENCE
-============================================================ */
-
-function startPresence() {
-
-if (presenceTimer) {
-
-    clearInterval(
-        presenceTimer
-    );
-}
-
-
-if (onlineUsersTimer) {
-
-    clearInterval(
-        onlineUsersTimer
-    );
-}
-
-
-registerPresence()
-    .then(
-        pollOnlineUsers
-    )
-    .catch(
-        error =>
-            console.error(
-                "Initial presence error:",
-                error
-            )
-    );
-
-
-/*
- * Worker timeout = 30 seconds.
- * Heartbeat = 8 seconds.
- */
-
-presenceTimer =
-    setInterval(
-        registerPresence,
-        8000
-    );
-
-
-/*
- * Refresh users every 2.5 seconds.
- */
-
-onlineUsersTimer =
-    setInterval(
-        pollOnlineUsers,
-        2500
-    );
-
-}
-
-/* ============================================================
-OFFLINE
-============================================================ */
-
-function setOffline() {
-
-const payload =
-    JSON.stringify({
-        userId:
-            myUserId
-    });
-
-
-try {
-
-    if (
-        navigator.sendBeacon
-    ) {
-
-        const blob =
-            new Blob(
-                [payload],
-                {
-                    type:
-                        "application/json"
-                }
+            localStorage.removeItem(
+                "video_call_name"
             );
 
+        } catch (_) {}
 
-        navigator.sendBeacon(
-            API +
-            "/presence/offline",
-            blob
+
+        renderOnlineUsers([]);
+
+        setConnectionStatus(
+            "Offline"
         );
-
 
         return;
     }
 
-} catch (_) {}
 
+    saveMyName(name);
 
-try {
+    await registerPresence();
 
-    fetch(
-        API +
-        "/presence/offline",
-        {
-            method:
-                "POST",
-
-            headers: {
-                "Content-Type":
-                    "application/json"
-            },
-
-            body:
-                payload,
-
-            keepalive:
-                true
-        }
-    );
-
-} catch (_) {}
-
+    await pollOnlineUsers();
 }
 
-window.addEventListener(
-"pagehide",
-setOffline
-);
 
-window.addEventListener(
-"beforeunload",
-setOffline
-);
+if (nameInput) {
+
+    nameInput.addEventListener(
+        "input",
+        () => {
+
+            clearTimeout(
+                nameUpdateTimer
+            );
+
+
+            nameUpdateTimer =
+                setTimeout(
+                    updateMyPresence,
+                    500
+                );
+        }
+    );
+}
+
 
 /* ============================================================
-INCOMING CALL POLLING
+   START PRESENCE
+============================================================ */
+
+function startPresence() {
+
+    if (presenceTimer) {
+
+        clearInterval(
+            presenceTimer
+        );
+    }
+
+
+    if (onlineUsersTimer) {
+
+        clearInterval(
+            onlineUsersTimer
+        );
+    }
+
+
+    registerPresence()
+        .then(
+            pollOnlineUsers
+        );
+
+
+    presenceTimer =
+        setInterval(
+            registerPresence,
+            8000
+        );
+
+
+    onlineUsersTimer =
+        setInterval(
+            pollOnlineUsers,
+            2500
+        );
+}
+
+
+/* ============================================================
+   OFFLINE
+============================================================ */
+
+function setOffline() {
+
+    const payload =
+        JSON.stringify({
+            userId:
+                myUserId
+        });
+
+
+    try {
+
+        if (
+            navigator.sendBeacon
+        ) {
+
+            const blob =
+                new Blob(
+                    [payload],
+                    {
+                        type:
+                            "application/json"
+                    }
+                );
+
+
+            navigator.sendBeacon(
+                API +
+                "/presence/offline",
+                blob
+            );
+
+            return;
+        }
+
+    } catch (_) {}
+
+
+    try {
+
+        fetch(
+            API +
+            "/presence/offline",
+            {
+                method:
+                    "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body:
+                    payload,
+
+                keepalive:
+                    true
+            }
+        );
+
+    } catch (_) {}
+}
+
+
+window.addEventListener(
+    "pagehide",
+    setOffline
+);
+
+window.addEventListener(
+    "beforeunload",
+    setOffline
+);
+
+
+/* ============================================================
+   INCOMING CALL POLLING
 ============================================================ */
 
 async function pollIncomingCalls() {
 
-if (incomingCallVisible) {
+    if (
+        incomingCallVisible ||
+        currentCallId
+    ) {
 
-    return;
-}
-
-
-if (currentCallId) {
-
-    return;
-}
-
-
-try {
-
-    const data =
-        await apiRequest(
-            "/call/poll",
-            {
-                userId:
-                    myUserId
-            }
-        );
-
-
-    const calls =
-        Array.isArray(
-            data.calls
-        )
-            ? data.calls
-            : [];
-
-
-    const call =
-        calls.find(
-            item =>
-                item &&
-                item.receiverId ===
-                    myUserId &&
-                item.status ===
-                    "ringing"
-        );
-
-
-    if (call) {
-
-        showIncomingCall(
-            call
-        );
+        return;
     }
 
-} catch (error) {
 
-    console.error(
-        "Incoming call polling error:",
-        error
-    );
+    try {
+
+        const data =
+            await apiRequest(
+                "/call/poll",
+                {
+                    userId:
+                        myUserId
+                }
+            );
+
+
+        const calls =
+            Array.isArray(data.calls)
+                ? data.calls
+                : [];
+
+
+        const call =
+            calls.find(
+                item =>
+                    item &&
+                    item.receiverId ===
+                        myUserId &&
+                    item.status ===
+                        "ringing"
+            );
+
+
+        if (call) {
+
+            showIncomingCall(
+                call
+            );
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Incoming call error:",
+            error
+        );
+    }
 }
 
-}
 
 /* ============================================================
-START INCOMING POLLING
+   INCOMING TIMER
 ============================================================ */
 
 function startIncomingCallPolling() {
 
-if (incomingCallTimer) {
+    if (incomingCallTimer) {
 
-    clearInterval(
-        incomingCallTimer
-    );
+        clearInterval(
+            incomingCallTimer
+        );
+    }
+
+
+    pollIncomingCalls();
+
+
+    incomingCallTimer =
+        setInterval(
+            pollIncomingCalls,
+            1200
+        );
 }
 
-
-pollIncomingCalls();
-
-
-incomingCallTimer =
-    setInterval(
-        pollIncomingCalls,
-        1200
-    );
-
-}
 
 /* ============================================================
-SHOW INCOMING CALL
+   SHOW INCOMING
 ============================================================ */
 
 function showIncomingCall(call) {
 
-if (!call) {
+    if (!call) {
+        return;
+    }
 
-    return;
+
+    incomingCall =
+        call;
+
+
+    incomingCallVisible =
+        true;
+
+
+    if (incomingCallerName) {
+
+        incomingCallerName.textContent =
+            call.callerName ||
+            "Someone";
+    }
+
+
+    if (incomingCallOverlay) {
+
+        incomingCallOverlay.style.display =
+            "flex";
+    }
 }
 
-
-incomingCall =
-    call;
-
-
-incomingCallVisible =
-    true;
-
-
-if (incomingCallerName) {
-
-    incomingCallerName.textContent =
-        call.callerName ||
-        "Unknown User";
-}
-
-
-if (incomingCallOverlay) {
-
-    incomingCallOverlay.style.display =
-        "flex";
-}
-
-}
 
 /* ============================================================
-HIDE INCOMING CALL
+   HIDE INCOMING
 ============================================================ */
 
 function hideIncomingCall() {
 
-incomingCallVisible =
-    false;
+    incomingCallVisible =
+        false;
+
+    incomingCall =
+        null;
 
 
-incomingCall =
-    null;
+    if (incomingCallOverlay) {
 
-
-if (incomingCallOverlay) {
-
-    incomingCallOverlay.style.display =
-        "none";
+        incomingCallOverlay.style.display =
+            "none";
+    }
 }
 
-}
 
 /* ============================================================
-ACCEPT CALL
+   ACCEPT
 ============================================================ */
 
 async function acceptIncomingCall() {
 
-if (!incomingCall) {
+    if (!incomingCall) {
+        return;
+    }
 
-    return;
+
+    const call =
+        incomingCall;
+
+
+    acceptCallButton.disabled =
+        true;
+
+    declineCallButton.disabled =
+        true;
+
+
+    try {
+
+        const data =
+            await apiRequest(
+                "/call/accept",
+                {
+                    callId:
+                        call.callId,
+
+                    userId:
+                        myUserId
+                }
+            );
+
+
+        const acceptedCall =
+            data.call ||
+            call;
+
+
+        hideIncomingCall();
+
+
+        currentCallId =
+            acceptedCall.callId ||
+            call.callId;
+
+
+        currentCallRole =
+            "receiver";
+
+
+        currentRoom =
+            acceptedCall.room ||
+            call.room ||
+            "";
+
+
+        currentName =
+            getMyName();
+
+
+        if (!currentRoom) {
+
+            throw new Error(
+                "Call room is missing."
+            );
+        }
+
+
+        await startJaaSCall(
+            currentName,
+            currentRoom
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Accept error:",
+            error
+        );
+
+
+        hideIncomingCall();
+
+
+        alert(
+            error.message ||
+            "Unable to accept the call."
+        );
+
+    } finally {
+
+        acceptCallButton.disabled =
+            false;
+
+        declineCallButton.disabled =
+            false;
+    }
 }
-
-
-const call =
-    incomingCall;
 
 
 if (acceptCallButton) {
 
-    acceptCallButton.disabled =
-        true;
+    acceptCallButton.addEventListener(
+        "click",
+        acceptIncomingCall
+    );
 }
 
 
-if (declineCallButton) {
+/* ============================================================
+   DECLINE
+============================================================ */
+
+async function declineIncomingCall() {
+
+    if (!incomingCall) {
+        return;
+    }
+
+
+    const call =
+        incomingCall;
+
+
+    acceptCallButton.disabled =
+        true;
 
     declineCallButton.disabled =
         true;
-}
 
 
-try {
+    try {
 
-    const data =
         await apiRequest(
-            "/call/accept",
+            "/call/decline",
             {
                 callId:
                     call.callId,
@@ -1394,35 +1388,555 @@ try {
             }
         );
 
+    } catch (error) {
 
-    const acceptedCall =
-        data.call ||
-        call;
+        console.error(
+            "Decline error:",
+            error
+        );
 
+    } finally {
 
-    currentCallId =
-        acceptedCall.callId ||
-        call.callId;
-
-
-    currentCallRole =
-        "receiver";
+        hideIncomingCall();
 
 
-    currentRoom =
-        acceptedCall.room ||
-        call.room ||
-        "";
+        acceptCallButton.disabled =
+            false;
+
+        declineCallButton.disabled =
+            false;
 
 
-    currentName =
+        await pollOnlineUsers();
+    }
+}
+
+
+if (declineCallButton) {
+
+    declineCallButton.addEventListener(
+        "click",
+        declineIncomingCall
+    );
+}
+
+
+/* ============================================================
+   CALL USER
+============================================================ */
+
+async function callUser(
+    receiverId,
+    receiverName
+) {
+
+    receiverId =
+        String(
+            receiverId || ""
+        ).trim();
+
+
+    receiverName =
+        String(
+            receiverName ||
+            "User"
+        ).trim();
+
+
+    const callerName =
         getMyName();
 
 
-    hideIncomingCall();
+    if (!callerName) {
+
+        alert(
+            "Please enter your name first."
+        );
+
+        nameInput.focus();
+
+        return;
+    }
 
 
-    if (!currentRoom) {
+    if (!receiverId) {
+
+        alert(
+            "This user is unavailable."
+        );
+
+        return;
+    }
+
+
+    if (
+        receiverId ===
+        myUserId
+    ) {
+
+        return;
+    }
+
+
+    if (currentCallId) {
+
+        alert(
+            "You are already in a call."
+        );
+
+        return;
+    }
+
+
+    currentName =
+        callerName;
+
+
+    currentReceiverId =
+        receiverId;
+
+
+    currentReceiverName =
+        receiverName;
+
+
+    /*
+     * Room is generated automatically.
+     * User never sees or enters it.
+     */
+
+    const privateRoom =
+        generatePrivateRoom();
+
+
+    try {
+
+        setConnectionStatus(
+            "Calling..."
+        );
+
+
+        const data =
+            await apiRequest(
+                "/call",
+                {
+                    callerId:
+                        myUserId,
+
+                    callerName:
+                        callerName,
+
+                    receiverId:
+                        receiverId,
+
+                    receiverName:
+                        receiverName,
+
+                    room:
+                        privateRoom
+                }
+            );
+
+
+        const call =
+            data.call ||
+            data;
+
+
+        currentCallId =
+            String(
+                call.callId ||
+                ""
+            );
+
+
+        currentCallRole =
+            "caller";
+
+
+        currentRoom =
+            String(
+                call.room ||
+                privateRoom
+            );
+
+
+        if (!currentCallId) {
+
+            throw new Error(
+                "Server did not return Call ID."
+            );
+        }
+
+
+        showCallingScreen(
+            receiverName
+        );
+
+
+        startOutgoingCallStatusPolling();
+
+
+    } catch (error) {
+
+        console.error(
+            "Create call error:",
+            error
+        );
+
+
+        hideCallingScreen();
+
+        resetCallState();
+
+
+        alert(
+            error.message ||
+            "Unable to start the call."
+        );
+    }
+}
+
+
+/* ============================================================
+   CALLING UI
+============================================================ */
+
+function showCallingScreen(name) {
+
+    if (callingReceiverName) {
+
+        callingReceiverName.textContent =
+            name || "User";
+    }
+
+
+    if (callingOverlay) {
+
+        callingOverlay.style.display =
+            "flex";
+    }
+}
+
+
+function hideCallingScreen() {
+
+    if (callingOverlay) {
+
+        callingOverlay.style.display =
+            "none";
+    }
+}
+
+
+if (cancelCallButton) {
+
+    cancelCallButton.addEventListener(
+        "click",
+        cancelOutgoingCall
+    );
+}
+
+
+/* ============================================================
+   CALL STATUS
+============================================================ */
+
+function startOutgoingCallStatusPolling() {
+
+    stopOutgoingCallStatusPolling();
+
+    checkOutgoingCallStatus();
+
+
+    callStatusTimer =
+        setInterval(
+            checkOutgoingCallStatus,
+            1000
+        );
+}
+
+
+function stopOutgoingCallStatusPolling() {
+
+    if (callStatusTimer) {
+
+        clearInterval(
+            callStatusTimer
+        );
+
+        callStatusTimer =
+            null;
+    }
+}
+
+
+async function checkOutgoingCallStatus() {
+
+    if (!currentCallId) {
+        return;
+    }
+
+
+    try {
+
+        const data =
+            await apiRequest(
+                "/call/status",
+                {
+                    callId:
+                        currentCallId,
+
+                    userId:
+                        myUserId
+                }
+            );
+
+
+        const call =
+            data.call ||
+            data;
+
+
+        const status =
+            call.status ||
+            data.status;
+
+
+        if (
+            status ===
+            "accepted"
+        ) {
+
+            stopOutgoingCallStatusPolling();
+
+            hideCallingScreen();
+
+
+            await startJaaSCall(
+                currentName,
+                currentRoom
+            );
+
+
+            return;
+        }
+
+
+        if (
+            status ===
+            "declined"
+        ) {
+
+            stopOutgoingCallStatusPolling();
+
+            hideCallingScreen();
+
+
+            alert(
+                (
+                    currentReceiverName ||
+                    "The user"
+                ) +
+                " declined the call."
+            );
+
+
+            resetCallState();
+
+            return;
+        }
+
+
+        if (
+            status ===
+            "cancelled"
+        ) {
+
+            stopOutgoingCallStatusPolling();
+
+            hideCallingScreen();
+
+            resetCallState();
+
+            return;
+        }
+
+
+        if (
+            status ===
+            "expired"
+        ) {
+
+            stopOutgoingCallStatusPolling();
+
+            hideCallingScreen();
+
+
+            alert(
+                "The call expired."
+            );
+
+
+            resetCallState();
+
+            return;
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Call status error:",
+            error
+        );
+    }
+}
+
+
+/* ============================================================
+   CANCEL
+============================================================ */
+
+async function cancelOutgoingCall() {
+
+    if (!currentCallId) {
+
+        hideCallingScreen();
+
+        return;
+    }
+
+
+    const callId =
+        currentCallId;
+
+
+    stopOutgoingCallStatusPolling();
+
+
+    try {
+
+        await apiRequest(
+            "/call/cancel",
+            {
+                callId:
+                    callId,
+
+                userId:
+                    myUserId
+            }
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Cancel error:",
+            error
+        );
+
+    } finally {
+
+        hideCallingScreen();
+
+        resetCallState();
+
+        await pollOnlineUsers();
+    }
+}
+
+
+/* ============================================================
+   LOAD JAAS
+============================================================ */
+
+function loadJaaSApi(appId) {
+
+    return new Promise(
+        (
+            resolve,
+            reject
+        ) => {
+
+            if (
+                window.JitsiMeetExternalAPI
+            ) {
+
+                resolve(
+                    window.JitsiMeetExternalAPI
+                );
+
+                return;
+            }
+
+
+            const script =
+                document.createElement(
+                    "script"
+                );
+
+
+            script.src =
+                "https://" +
+                JAAS_DOMAIN +
+                "/" +
+                appId +
+                "/external_api.js";
+
+
+            script.async = true;
+
+
+            script.onload =
+                () => {
+
+                    if (
+                        window.JitsiMeetExternalAPI
+                    ) {
+
+                        resolve(
+                            window.JitsiMeetExternalAPI
+                        );
+
+                    } else {
+
+                        reject(
+                            new Error(
+                                "JaaS API failed to load."
+                            )
+                        );
+                    }
+                };
+
+
+            script.onerror =
+                () => {
+
+                    reject(
+                        new Error(
+                            "Unable to load JaaS API."
+                        )
+                    );
+                };
+
+
+            document.head.appendChild(
+                script
+            );
+        }
+    );
+}
+
+
+/* ============================================================
+   START JAAS
+============================================================ */
+
+async function startJaaSCall(
+    displayName,
+    room
+) {
+
+    if (!room) {
 
         throw new Error(
             "Call room is missing."
@@ -1430,927 +1944,270 @@ try {
     }
 
 
-    await startJaaSCall(
-        currentName,
-        currentRoom
-    );
+    try {
 
-} catch (error) {
-
-    console.error(
-        "Accept call error:",
-        error
-    );
-
-
-    hideIncomingCall();
-
-
-    resetCallState();
-
-
-    alert(
-        error.message ||
-        "Unable to accept the call."
-    );
-
-} finally {
-
-    if (acceptCallButton) {
-
-        acceptCallButton.disabled =
-            false;
-    }
-
-
-    if (declineCallButton) {
-
-        declineCallButton.disabled =
-            false;
-    }
-}
-
-}
-
-if (acceptCallButton) {
-
-acceptCallButton.addEventListener(
-    "click",
-    acceptIncomingCall
-);
-
-}
-
-/* ============================================================
-DECLINE CALL
-============================================================ */
-
-async function declineIncomingCall() {
-
-if (!incomingCall) {
-
-    return;
-}
-
-
-const call =
-    incomingCall;
-
-
-if (acceptCallButton) {
-
-    acceptCallButton.disabled =
-        true;
-}
-
-
-if (declineCallButton) {
-
-    declineCallButton.disabled =
-        true;
-}
-
-
-try {
-
-    await apiRequest(
-        "/call/decline",
-        {
-            callId:
-                call.callId,
-
-            userId:
-                myUserId
-        }
-    );
-
-} catch (error) {
-
-    console.error(
-        "Decline call error:",
-        error
-    );
-
-} finally {
-
-    hideIncomingCall();
-
-
-    if (acceptCallButton) {
-
-        acceptCallButton.disabled =
-            false;
-    }
-
-
-    if (declineCallButton) {
-
-        declineCallButton.disabled =
-            false;
-    }
-
-
-    await pollOnlineUsers();
-}
-
-}
-
-if (declineCallButton) {
-
-declineCallButton.addEventListener(
-    "click",
-    declineIncomingCall
-);
-
-}
-
-/* ============================================================
-CALL USER
-============================================================ */
-
-async function callUser(
-receiverId,
-receiverName
-) {
-
-receiverId =
-    String(
-        receiverId || ""
-    ).trim();
-
-
-receiverName =
-    String(
-        receiverName || "User"
-    ).trim();
-
-
-const callerName =
-    getMyName();
-
-
-if (!callerName) {
-
-    alert(
-        "Please enter your name first."
-    );
-
-
-    if (nameInput) {
-
-        nameInput.focus();
-    }
-
-
-    return;
-}
-
-
-if (!receiverId) {
-
-    alert(
-        "This user is unavailable."
-    );
-
-
-    return;
-}
-
-
-if (
-    receiverId ===
-    myUserId
-) {
-
-    return;
-}
-
-
-if (currentCallId) {
-
-    alert(
-        "You are already in a call."
-    );
-
-
-    return;
-}
-
-
-currentName =
-    callerName;
-
-
-currentReceiverId =
-    receiverId;
-
-
-currentReceiverName =
-    receiverName;
-
-
-try {
-
-    setConnectionStatus(
-        "Calling..."
-    );
-
-
-    /*
-     * IMPORTANT:
-     *
-     * The user does NOT create or enter a room.
-     *
-     * Worker creates the private call room.
-     */
-
-    const data =
-        await apiRequest(
-            "/call",
-            {
-                callerId:
-                    myUserId,
-
-                callerName:
-                    callerName,
-
-                receiverId:
-                    receiverId,
-
-                receiverName:
-                    receiverName
-            }
+        setConnectionStatus(
+            "Connecting..."
         );
 
 
-    const createdCall =
-        data.call ||
-        data;
+        const tokenData =
+            await apiRequest(
+                "/token",
+                {
+                    name:
+                        displayName ||
+                        "Guest",
+
+                    room:
+                        room
+                }
+            );
 
-
-    currentCallId =
-        String(
-            createdCall.callId ||
-            data.callId ||
-            ""
-        );
-
-
-    currentCallRole =
-        "caller";
-
-
-    currentRoom =
-        String(
-            createdCall.room ||
-            data.room ||
-            ""
-        );
-
-
-    if (!currentCallId) {
-
-        throw new Error(
-            "Server did not return a Call ID."
-        );
-    }
-
-
-    if (!currentRoom) {
-
-        throw new Error(
-            "Server did not create a private call room."
-        );
-    }
-
-
-    console.log(
-        "CALL CREATED:",
-        createdCall
-    );
-
-
-    showCallingScreen(
-        receiverName
-    );
-
-
-    startOutgoingCallStatusPolling();
-
-
-    await pollOnlineUsers();
-
-} catch (error) {
-
-    console.error(
-        "Create call error:",
-        error
-    );
-
-
-    hideCallingScreen();
-
-
-    resetCallState();
-
-
-    alert(
-        error.message ||
-        "Unable to start the call."
-    );
-}
-
-}
-
-window.callUser =
-callUser;
-
-/* ============================================================
-CALLING UI
-============================================================ */
-
-function showCallingScreen(
-receiverName
-) {
-
-if (callingReceiverName) {
-
-    callingReceiverName.textContent =
-        receiverName ||
-        "User";
-}
-
-
-if (callingOverlay) {
-
-    callingOverlay.style.display =
-        "flex";
-}
-
-}
-
-function hideCallingScreen() {
-
-if (callingOverlay) {
-
-    callingOverlay.style.display =
-        "none";
-}
-
-}
-
-if (cancelCallButton) {
-
-cancelCallButton.addEventListener(
-    "click",
-    cancelOutgoingCall
-);
-
-}
-
-/* ============================================================
-OUTGOING CALL STATUS
-============================================================ */
-
-function startOutgoingCallStatusPolling() {
-
-stopOutgoingCallStatusPolling();
-
-
-checkOutgoingCallStatus();
-
-
-callStatusTimer =
-    setInterval(
-        checkOutgoingCallStatus,
-        1000
-    );
-
-}
-
-function stopOutgoingCallStatusPolling() {
-
-if (callStatusTimer) {
-
-    clearInterval(
-        callStatusTimer
-    );
-
-
-    callStatusTimer =
-        null;
-}
-
-}
-
-/* ============================================================
-CHECK CALL STATUS
-============================================================ */
-
-async function checkOutgoingCallStatus() {
-
-if (!currentCallId) {
-
-    return;
-}
-
-
-try {
-
-    const data =
-        await apiRequest(
-            "/call/status",
-            {
-                callId:
-                    currentCallId,
-
-                userId:
-                    myUserId
-            }
-        );
-
-
-    const call =
-        data.call ||
-        data;
-
-
-    const status =
-        call.status ||
-        data.status;
-
-
-    if (
-        status ===
-        "accepted"
-    ) {
-
-        stopOutgoingCallStatusPolling();
-
-
-        hideCallingScreen();
-
-
-        currentCallRole =
-            "caller";
-
-
-        await startJaaSCall(
-            currentName,
-            currentRoom
-        );
-
-
-        return;
-    }
-
-
-    if (
-        status ===
-        "declined"
-    ) {
-
-        stopOutgoingCallStatusPolling();
-
-
-        hideCallingScreen();
-
-
-        alert(
-            (
-                currentReceiverName ||
-                "The user"
-            ) +
-            " declined the call."
-        );
-
-
-        resetCallState();
-
-
-        await pollOnlineUsers();
-
-
-        return;
-    }
-
-
-    if (
-        status ===
-        "cancelled"
-    ) {
-
-        stopOutgoingCallStatusPolling();
-
-
-        hideCallingScreen();
-
-
-        resetCallState();
-
-
-        await pollOnlineUsers();
-
-
-        return;
-    }
-
-
-    if (
-        status ===
-        "expired"
-    ) {
-
-        stopOutgoingCallStatusPolling();
-
-
-        hideCallingScreen();
-
-
-        alert(
-            "The call expired."
-        );
-
-
-        resetCallState();
-
-
-        await pollOnlineUsers();
-    }
-
-} catch (error) {
-
-    console.error(
-        "Call status error:",
-        error
-    );
-}
-
-}
-
-/* ============================================================
-CANCEL OUTGOING CALL
-============================================================ */
-
-async function cancelOutgoingCall() {
-
-if (!currentCallId) {
-
-    hideCallingScreen();
-
-    return;
-}
-
-
-const callId =
-    currentCallId;
-
-
-stopOutgoingCallStatusPolling();
-
-
-try {
-
-    await apiRequest(
-        "/call/cancel",
-        {
-            callId:
-                callId,
-
-            userId:
-                myUserId
-        }
-    );
-
-} catch (error) {
-
-    console.error(
-        "Cancel call error:",
-        error
-    );
-
-} finally {
-
-    hideCallingScreen();
-
-
-    resetCallState();
-
-
-    await pollOnlineUsers();
-}
-
-}
-
-/* ============================================================
-LOAD JAAS API
-============================================================ */
-
-function loadJaaSApi(appId) {
-
-return new Promise(
-    (
-        resolve,
-        reject
-    ) => {
 
         if (
-            window.JitsiMeetExternalAPI
+            !tokenData.appId ||
+            !tokenData.token
         ) {
 
-            resolve(
-                window.JitsiMeetExternalAPI
+            throw new Error(
+                "JaaS authentication failed."
             );
-
-            return;
         }
 
 
-        const script =
-            document.createElement(
-                "script"
+        await loadJaaSApi(
+            tokenData.appId
+        );
+
+
+        if (homeScreen) {
+
+            homeScreen.style.display =
+                "none";
+        }
+
+
+        if (callScreen) {
+
+            callScreen.style.display =
+                "flex";
+
+            callScreen.classList.add(
+                "active"
             );
+        }
 
 
-        script.src =
-            "https://" +
-            JAAS_DOMAIN +
+        if (roomLabel) {
+
+            roomLabel.textContent =
+                "Connected";
+        }
+
+
+        if (meet) {
+
+            meet.innerHTML = "";
+        }
+
+
+        if (jitsiApi) {
+
+            try {
+
+                leavingJitsi = true;
+
+                jitsiApi.dispose();
+
+            } catch (_) {}
+
+
+            jitsiApi = null;
+
+            leavingJitsi = false;
+        }
+
+
+        const roomName =
+            tokenData.appId +
             "/" +
-            appId +
-            "/external_api.js";
+            room;
 
 
-        script.async =
-            true;
+        const options = {
 
+            roomName:
+                roomName,
 
-        script.onload =
-            () => {
+            parentNode:
+                meet,
 
-                if (
-                    window.JitsiMeetExternalAPI
-                ) {
+            jwt:
+                tokenData.token,
 
-                    resolve(
-                        window.JitsiMeetExternalAPI
-                    );
+            width:
+                "100%",
 
-                } else {
+            height:
+                "100%",
 
-                    reject(
-                        new Error(
-                            "JaaS API failed to load."
-                        )
-                    );
-                }
-            };
+            userInfo: {
 
-
-        script.onerror =
-            () => {
-
-                reject(
-                    new Error(
-                        "Unable to load JaaS API."
-                    )
-                );
-            };
-
-
-        document.head.appendChild(
-            script
-        );
-    }
-);
-
-}
-
-/* ============================================================
-START JAAS
-============================================================ */
-
-async function startJaaSCall(
-displayName,
-room
-) {
-
-if (!room) {
-
-    throw new Error(
-        "Private call room is missing."
-    );
-}
-
-
-try {
-
-    setConnectionStatus(
-        "Connecting..."
-    );
-
-
-    const tokenData =
-        await apiRequest(
-            "/token",
-            {
-                name:
+                displayName:
                     displayName ||
-                    "Guest",
+                    "Guest"
+            },
 
-                room:
-                    room
+            configOverwrite: {
+
+                prejoinPageEnabled:
+                    false,
+
+                disableDeepLinking:
+                    true,
+
+                startWithAudioMuted:
+                    false,
+
+                startWithVideoMuted:
+                    false
+            },
+
+            interfaceConfigOverwrite: {
+
+                MOBILE_APP_PROMO:
+                    false
             }
-        );
-
-
-    const appId =
-        tokenData.appId;
-
-
-    const jwt =
-        tokenData.token;
-
-
-    if (!appId) {
-
-        throw new Error(
-            "JaaS App ID is missing."
-        );
-    }
-
-
-    if (!jwt) {
-
-        throw new Error(
-            "JaaS JWT token is missing."
-        );
-    }
-
-
-    await loadJaaSApi(
-        appId
-    );
-
-
-    if (homeScreen) {
-
-        homeScreen.style.display =
-            "none";
-    }
-
-
-    if (callScreen) {
-
-        callScreen.classList.add(
-            "active"
-        );
-
-        callScreen.style.display =
-            "flex";
-    }
-
-
-    if (roomLabel) {
-
-        /*
-         * Do not show the actual room code.
-         */
-
-        roomLabel.textContent =
-            "Private Video Call";
-    }
-
-
-    if (meet) {
-
-        meet.innerHTML =
-            "";
-    }
-
-
-    if (jitsiApi) {
-
-        try {
-
-            leavingJitsi =
-                true;
-
-            jitsiApi.dispose();
-
-        } catch (_) {}
+        };
 
 
         jitsiApi =
-            null;
-
-        leavingJitsi =
-            false;
-    }
-
-
-    const roomName =
-        appId +
-        "/" +
-        room;
+            new window.JitsiMeetExternalAPI(
+                JAAS_DOMAIN,
+                options
+            );
 
 
-    const options = {
+        jitsiApi.addEventListener(
+            "videoConferenceJoined",
+            () => {
 
-        roomName:
-            roomName,
-
-        parentNode:
-            meet,
-
-        jwt:
-            jwt,
-
-        width:
-            "100%",
-
-        height:
-            "100%",
-
-
-        userInfo: {
-
-            displayName:
-                displayName ||
-                "Guest"
-        },
-
-
-        configOverwrite: {
-
-            prejoinPageEnabled:
-                false,
-
-            disableDeepLinking:
-                true,
-
-            startWithAudioMuted:
-                false,
-
-            startWithVideoMuted:
-                false
-        },
-
-
-        interfaceConfigOverwrite: {
-
-            MOBILE_APP_PROMO:
-                false
-        }
-    };
-
-
-    jitsiApi =
-        new window.JitsiMeetExternalAPI(
-            JAAS_DOMAIN,
-            options
+                setConnectionStatus(
+                    "Connected"
+                );
+            }
         );
 
 
-    jitsiApi.addEventListener(
-        "videoConferenceJoined",
-        () => {
+        jitsiApi.addEventListener(
+            "videoConferenceLeft",
+            () => {
 
-            setConnectionStatus(
-                "Connected"
+                if (!leavingJitsi) {
+
+                    leaveCall();
+                }
+            }
+        );
+
+
+        jitsiApi.addEventListener(
+            "readyToClose",
+            () => {
+
+                if (!leavingJitsi) {
+
+                    leaveCall();
+                }
+            }
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "JaaS error:",
+            error
+        );
+
+
+        alert(
+            error.message ||
+            "Unable to join video call."
+        );
+
+
+        if (callScreen) {
+
+            callScreen.classList.remove(
+                "active"
+            );
+
+            callScreen.style.display =
+                "none";
+        }
+
+
+        if (homeScreen) {
+
+            homeScreen.style.display =
+                "flex";
+        }
+
+
+        resetCallState();
+    }
+}
+
+
+/* ============================================================
+   LEAVE CALL
+============================================================ */
+
+async function leaveCall() {
+
+    const callId =
+        currentCallId;
+
+
+    stopOutgoingCallStatusPolling();
+
+
+    /*
+     * Caller can cancel through current backend.
+     */
+
+    if (
+        callId &&
+        currentCallRole ===
+            "caller"
+    ) {
+
+        try {
+
+            await apiRequest(
+                "/call/cancel",
+                {
+                    callId:
+                        callId,
+
+                    userId:
+                        myUserId
+                }
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Leave signal error:",
+                error
             );
         }
-    );
+    }
 
 
-    jitsiApi.addEventListener(
-        "videoConferenceLeft",
-        () => {
-
-            if (!leavingJitsi) {
-
-                leaveCall();
-            }
-        }
-    );
-
-
-    jitsiApi.addEventListener(
-        "readyToClose",
-        () => {
-
-            if (!leavingJitsi) {
-
-                leaveCall();
-            }
-        }
-    );
-
-} catch (error) {
-
-    console.error(
-        "JaaS error:",
-        error
-    );
+    disposeJitsi();
 
 
     if (callScreen) {
@@ -2374,216 +2231,135 @@ try {
     resetCallState();
 
 
-    alert(
-        error.message ||
-        "Unable to start video call."
-    );
+    await registerPresence();
+
+    await pollOnlineUsers();
 }
 
-}
 
 /* ============================================================
-LEAVE CALL
-============================================================ */
-
-async function leaveCall() {
-
-const callId =
-    currentCallId;
-
-
-stopOutgoingCallStatusPolling();
-
-
-if (callId) {
-
-    try {
-
-        await apiRequest(
-            "/call/cancel",
-            {
-                callId:
-                    callId,
-
-                userId:
-                    myUserId
-            }
-        );
-
-    } catch (error) {
-
-        console.error(
-            "Leave call signal error:",
-            error
-        );
-    }
-}
-
-
-disposeJitsi();
-
-
-if (callScreen) {
-
-    callScreen.classList.remove(
-        "active"
-    );
-
-    callScreen.style.display =
-        "none";
-}
-
-
-if (homeScreen) {
-
-    homeScreen.style.display =
-        "flex";
-}
-
-
-resetCallState();
-
-
-await registerPresence();
-
-await pollOnlineUsers();
-
-}
-
-/* ============================================================
-DISPOSE JAAS
+   DISPOSE JAAS
 ============================================================ */
 
 function disposeJitsi() {
 
-if (!jitsiApi) {
+    if (!jitsiApi) {
+        return;
+    }
 
-    return;
+
+    try {
+
+        leavingJitsi = true;
+
+        jitsiApi.dispose();
+
+    } catch (error) {
+
+        console.error(
+            "Jitsi dispose error:",
+            error
+        );
+
+    } finally {
+
+        jitsiApi = null;
+
+        leavingJitsi = false;
+    }
 }
 
-
-try {
-
-    leavingJitsi =
-        true;
-
-    jitsiApi.dispose();
-
-} catch (error) {
-
-    console.error(
-        "Jitsi dispose error:",
-        error
-    );
-
-} finally {
-
-    jitsiApi =
-        null;
-
-    leavingJitsi =
-        false;
-}
-
-}
 
 /* ============================================================
-RESET CALL STATE
+   RESET
 ============================================================ */
 
 function resetCallState() {
 
-currentCallId =
-    "";
+    currentCallId = "";
 
-currentCallRole =
-    "";
+    currentCallRole = "";
 
-currentRoom =
-    "";
+    currentRoom = "";
 
-currentReceiverId =
-    "";
+    currentReceiverId = "";
 
-currentReceiverName =
-    "";
+    currentReceiverName = "";
 
 
-stopOutgoingCallStatusPolling();
+    stopOutgoingCallStatusPolling();
+
+    hideCallingScreen();
+
+    hideIncomingCall();
 
 
-hideCallingScreen();
-
-hideIncomingCall();
-
-
-setConnectionStatus(
-    getMyName()
-        ? "Online"
-        : "Offline"
-);
-
+    setConnectionStatus(
+        getMyName()
+            ? "Online"
+            : "Offline"
+    );
 }
 
+
 /* ============================================================
-BACK BUTTON
+   BACK
 ============================================================ */
 
 if (backButton) {
 
-backButton.addEventListener(
-    "click",
-    async () => {
+    backButton.addEventListener(
+        "click",
+        async () => {
 
-        if (currentCallId) {
+            if (currentCallId) {
 
-            const leave =
-                confirm(
-                    "Leave this call?"
-                );
+                const leave =
+                    confirm(
+                        "Leave this call?"
+                    );
 
 
-            if (!leave) {
+                if (!leave) {
+                    return;
+                }
+
+
+                await leaveCall();
 
                 return;
             }
 
 
-            await leaveCall();
+            disposeJitsi();
 
-            return;
+
+            if (callScreen) {
+
+                callScreen.classList.remove(
+                    "active"
+                );
+
+                callScreen.style.display =
+                    "none";
+            }
+
+
+            if (homeScreen) {
+
+                homeScreen.style.display =
+                    "flex";
+            }
+
+
+            resetCallState();
         }
-
-
-        disposeJitsi();
-
-
-        if (callScreen) {
-
-            callScreen.classList.remove(
-                "active"
-            );
-
-            callScreen.style.display =
-                "none";
-        }
-
-
-        if (homeScreen) {
-
-            homeScreen.style.display =
-                "flex";
-        }
-
-
-        resetCallState();
-    }
-);
-
+    );
 }
 
+
 /* ============================================================
-INITIALIZE
+   INITIALIZE
 ============================================================ */
 
 loadMyName();
@@ -2592,57 +2368,50 @@ startPresence();
 
 startIncomingCallPolling();
 
+
 /* ============================================================
-DEBUG HELPERS
+   DEBUG
 ============================================================ */
 
 window.getMyUserId =
-function () {
-
-    return myUserId;
-};
+    () => myUserId;
 
 window.getMyName =
-function () {
-
-    return getMyName();
-};
+    () => getMyName();
 
 window.testPresence =
-async function () {
+    async () => {
 
-    console.log(
-        "MY USER ID:",
-        myUserId
-    );
+        console.log(
+            "MY USER ID:",
+            myUserId
+        );
 
+        console.log(
+            "MY NAME:",
+            getMyName()
+        );
 
-    console.log(
-        "MY NAME:",
-        getMyName()
-    );
+        await registerPresence();
 
+        await pollOnlineUsers();
 
-    await registerPresence();
+        console.log(
+            "Presence test complete."
+        );
+    };
 
-    await pollOnlineUsers();
-
-
-    console.log(
-        "Presence test complete."
-    );
-};
 
 console.log(
-"Private 1v1 Video Call initialized."
+    "1v1 Video Call initialized."
 );
 
 console.log(
-"My User ID:",
-myUserId
+    "My User ID:",
+    myUserId
 );
 
 console.log(
-"My Name:",
-getMyName()
+    "My Name:",
+    getMyName()
 );
