@@ -5,29 +5,17 @@
    DOM
 ============================================================ */
 
-const homeScreen =
-    document.getElementById("homeScreen");
+const homeScreen = document.getElementById("homeScreen");
+const callScreen = document.getElementById("callScreen");
 
-const callScreen =
-    document.getElementById("callScreen");
+const nameInput = document.getElementById("nameInput");
+const backButton = document.getElementById("backButton");
 
-const nameInput =
-    document.getElementById("nameInput");
+const roomLabel = document.getElementById("roomLabel");
+const meet = document.getElementById("meet");
 
-const backButton =
-    document.getElementById("backButton");
-
-const roomLabel =
-    document.getElementById("roomLabel");
-
-const meet =
-    document.getElementById("meet");
-
-const onlineUsers =
-    document.getElementById("onlineUsers");
-
-const onlineCount =
-    document.getElementById("onlineCount");
+const onlineUsers = document.getElementById("onlineUsers");
+const onlineCount = document.getElementById("onlineCount");
 
 const refreshUsersButton =
     document.getElementById("refreshUsersButton");
@@ -94,6 +82,7 @@ let currentName = "";
 let currentRoom = "";
 let currentCallId = "";
 let currentCallRole = "";
+
 let currentReceiverId = "";
 let currentReceiverName = "";
 
@@ -122,18 +111,14 @@ function getUserId() {
     let userId = "";
 
     try {
-
         userId =
             localStorage.getItem(
                 "video_call_user_id"
             ) || "";
-
     } catch (_) {}
-
 
     userId =
         String(userId).trim();
-
 
     if (!userId) {
 
@@ -153,9 +138,8 @@ function getUserId() {
                 "-" +
                 Math.random()
                     .toString(36)
-                    .slice(2, 12);
+                    .substring(2, 12);
         }
-
 
         try {
 
@@ -167,13 +151,11 @@ function getUserId() {
         } catch (_) {}
     }
 
-
     return userId;
 }
 
 
-const myUserId =
-    getUserId();
+const myUserId = getUserId();
 
 
 /* ============================================================
@@ -184,7 +166,6 @@ function saveMyName(name) {
 
     const value =
         String(name || "").trim();
-
 
     try {
 
@@ -219,10 +200,8 @@ function loadMyName() {
 
     } catch (_) {}
 
-
     saved =
         String(saved).trim();
-
 
     if (
         nameInput &&
@@ -232,7 +211,6 @@ function loadMyName() {
         nameInput.value =
             saved;
     }
-
 
     return saved;
 }
@@ -253,11 +231,9 @@ function getInitial(name) {
     const value =
         String(name || "").trim();
 
-
     if (!value) {
         return "?";
     }
-
 
     return value
         .charAt(0)
@@ -266,7 +242,7 @@ function getInitial(name) {
 
 
 /* ============================================================
-   STATUS
+   CONNECTION STATUS
 ============================================================ */
 
 function setConnectionStatus(text) {
@@ -276,126 +252,6 @@ function setConnectionStatus(text) {
         connectionStatus.textContent =
             text;
     }
-}
-
-
-/* ============================================================
-   MOBILE DEBUG
-   Android Console မလိုအောင်
-============================================================ */
-
-let debugBox = null;
-
-
-function createDebugBox() {
-
-    if (debugBox) {
-        return debugBox;
-    }
-
-
-    debugBox =
-        document.createElement(
-            "div"
-        );
-
-
-    debugBox.id =
-        "presenceDebugBox";
-
-
-    debugBox.style.position =
-        "fixed";
-
-    debugBox.style.left =
-        "8px";
-
-    debugBox.style.right =
-        "8px";
-
-    debugBox.style.bottom =
-        "8px";
-
-    debugBox.style.zIndex =
-        "999999";
-
-    debugBox.style.background =
-        "rgba(0,0,0,.88)";
-
-    debugBox.style.color =
-        "#fff";
-
-    debugBox.style.padding =
-        "8px 10px";
-
-    debugBox.style.borderRadius =
-        "8px";
-
-    debugBox.style.fontSize =
-        "11px";
-
-    debugBox.style.lineHeight =
-        "1.45";
-
-    debugBox.style.fontFamily =
-        "monospace";
-
-    debugBox.style.maxHeight =
-        "110px";
-
-    debugBox.style.overflow =
-        "auto";
-
-    debugBox.style.pointerEvents =
-        "none";
-
-
-    document.body.appendChild(
-        debugBox
-    );
-
-
-    return debugBox;
-}
-
-
-function debugLog(message) {
-
-    try {
-
-        const box =
-            createDebugBox();
-
-
-        const time =
-            new Date()
-                .toLocaleTimeString();
-
-
-        box.innerHTML +=
-            "[" +
-            time +
-            "] " +
-            String(message) +
-            "<br>";
-
-
-        while (
-            box.childNodes.length >
-            8
-        ) {
-
-            box.removeChild(
-                box.firstChild
-            );
-        }
-
-    } catch (_) {}
-
-
-    console.log(
-        message
-    );
 }
 
 
@@ -411,8 +267,7 @@ async function apiRequest(
 
     const fetchOptions = {
 
-        method:
-            "POST",
+        method: "POST",
 
         headers: {
 
@@ -424,57 +279,22 @@ async function apiRequest(
         },
 
         body:
-            JSON.stringify(
-                body
-            )
+            JSON.stringify(body)
     };
 
-
-    if (
-        options.keepalive
-    ) {
+    if (options.keepalive) {
 
         fetchOptions.keepalive =
             true;
     }
 
-
-    debugLog(
-        "POST " +
-        path
-    );
-
-
-    let response;
-
-
-    try {
-
-        response =
-            await fetch(
-                API + path,
-                fetchOptions
-            );
-
-    } catch (error) {
-
-        debugLog(
-            "FETCH ERROR: " +
-            (
-                error.message ||
-                String(error)
-            )
+    const response =
+        await fetch(
+            API + path,
+            fetchOptions
         );
 
-
-        throw new Error(
-            "Network connection failed."
-        );
-    }
-
-
-    let data = null;
-
+    let data = {};
 
     try {
 
@@ -483,63 +303,26 @@ async function apiRequest(
 
     } catch (_) {
 
-        data = null;
+        data = {};
     }
-
-
-    debugLog(
-        path +
-        " → HTTP " +
-        response.status
-    );
-
 
     if (!response.ok) {
 
-        debugLog(
-            path +
-            " ERROR: " +
-            (
-                data &&
-                (
-                    data.error ||
-                    data.message
-                )
-                    ? (
-                        data.error ||
-                        data.message
-                    )
-                    : response.status
-            )
-        );
-
-
         throw new Error(
-            data &&
-            (
-                data.error ||
-                data.message
-            )
-                ? (
-                    data.error ||
-                    data.message
-                )
-                : (
-                    "Request failed (" +
-                    response.status +
-                    ")."
-                )
+            data.error ||
+            data.message ||
+            "Request failed (" +
+            response.status +
+            ")."
         );
     }
-
 
     return data || {};
 }
 
 
 /* ============================================================
-   AUTO ROOM
-   Internal only.
+   INTERNAL ROOM
 ============================================================ */
 
 function generatePrivateRoom() {
@@ -550,7 +333,6 @@ function generatePrivateRoom() {
         "0123456789";
 
     let result = "";
-
 
     for (
         let i = 0;
@@ -567,31 +349,27 @@ function generatePrivateRoom() {
             );
     }
 
-
     return "call-" + result;
 }
 
 
 /* ============================================================
-   CLEAR USERS
+   EMPTY USERS
 ============================================================ */
 
-function clearOnlineUsers() {
+function showNoUsers() {
 
     if (!onlineUsers) {
         return;
     }
 
-
     onlineUsers.innerHTML = "";
-
 
     if (onlineCount) {
 
         onlineCount.textContent =
             "0";
     }
-
 
     if (noUsersMessage) {
 
@@ -609,19 +387,22 @@ function clearOnlineUsers() {
                 "div"
             );
 
-
         empty.className =
             "no-users-message";
 
-
         empty.textContent =
             "No other users online.";
-
 
         onlineUsers.appendChild(
             empty
         );
     }
+}
+
+
+function clearOnlineUsers() {
+
+    showNoUsers();
 }
 
 
@@ -634,83 +415,55 @@ async function registerPresence() {
     const name =
         getMyName();
 
-
     if (!name) {
 
         setConnectionStatus(
             "Offline"
         );
 
-
-        clearOnlineUsers();
-
-
-        debugLog(
-            "No name → offline"
-        );
-
+        showNoUsers();
 
         return false;
     }
 
-
     saveMyName(name);
-
 
     if (presenceBusy) {
 
         return true;
     }
 
-
     presenceBusy = true;
-
 
     try {
 
-        const data =
-            await apiRequest(
-                "/presence/online",
-                {
-                    userId:
-                        myUserId,
+        await apiRequest(
+            "/presence/online",
+            {
+                userId:
+                    myUserId,
 
-                    name:
-                        name
-                }
-            );
-
-
-        debugLog(
-            "ONLINE OK: " +
-            (
-                data &&
-                data.user
-                    ? data.user.name
-                    : "registered"
-            )
+                name:
+                    name
+            }
         );
-
 
         setConnectionStatus(
             "Online"
         );
 
-
         return true;
 
     } catch (error) {
-
-        debugLog(
-            "ONLINE FAIL: " +
-            error.message
-        );
-
 
         setConnectionStatus(
             "Reconnecting..."
         );
 
+        console.error(
+            "Presence online error:",
+            error
+        );
 
         return false;
 
@@ -731,23 +484,19 @@ async function pollOnlineUsers() {
     const name =
         getMyName();
 
-
     if (!name) {
 
-        clearOnlineUsers();
+        showNoUsers();
 
         return false;
     }
-
 
     if (usersPollBusy) {
 
         return false;
     }
 
-
     usersPollBusy = true;
-
 
     try {
 
@@ -760,54 +509,34 @@ async function pollOnlineUsers() {
                 }
             );
 
+        let users = [];
+
+        if (
+            data &&
+            Array.isArray(data.users)
+        ) {
+
+            users =
+                data.users;
+        }
 
         /*
-         * Worker က ဒီပုံစံပြန်ပေးတယ်:
-         *
-         * {
-         *   ok: true,
-         *   users: [...]
-         * }
+         * Remove current user
          */
-
-        const users =
-            data &&
-            Array.isArray(
-                data.users
-            )
-                ? data.users
-                : [];
-
-
-        debugLog(
-            "POLL OK: " +
-            users.length +
-            " user(s)"
-        );
-
 
         const normalized =
             users
                 .filter(
-                    user => {
-
-                        if (!user) {
-                            return false;
-                        }
-
-
-                        const id =
-                            String(
-                                user.userId ||
-                                ""
-                            ).trim();
-
-
-                        return (
-                            id &&
-                            id !== myUserId
-                        );
-                    }
+                    user =>
+                        user &&
+                        String(
+                            user.userId ||
+                            ""
+                        ).trim() &&
+                        String(
+                            user.userId ||
+                            ""
+                        ).trim() !== myUserId
                 )
                 .map(
                     user => {
@@ -835,25 +564,22 @@ async function pollOnlineUsers() {
                     }
                 );
 
-
         renderOnlineUsers(
             normalized
         );
-
 
         return true;
 
     } catch (error) {
 
-        debugLog(
-            "POLL FAIL: " +
-            error.message
+        console.error(
+            "Online users error:",
+            error
         );
 
-
         /*
-         * Poll fail ဖြစ်ရင်
-         * ရှိပြီးသား list ကို မဖျက်ပါ။
+         * Error ဖြစ်ရင်
+         * လက်ရှိ list ကို မဖျက်ပါ။
          */
 
         return false;
@@ -867,116 +593,57 @@ async function pollOnlineUsers() {
 
 
 /* ============================================================
-   RENDER USERS
+   RENDER ONLINE USERS
 ============================================================ */
 
-function renderOnlineUsers(
-    users
-) {
+function renderOnlineUsers(users) {
 
     if (!onlineUsers) {
 
-        debugLog(
-            "ERROR: #onlineUsers မတွေ့ပါ"
+        console.error(
+            "#onlineUsers not found"
         );
-
 
         return;
     }
 
-
     const list =
         Array.isArray(users)
-            ? users.filter(
-                user => {
-
-                    if (!user) {
-                        return false;
-                    }
-
-
-                    const id =
+            ? users
+                .filter(
+                    user =>
+                        user &&
                         String(
                             user.userId ||
                             ""
-                        ).trim();
-
-
-                    return (
-                        id &&
-                        id !== myUserId
-                    );
-                }
-            )
+                        ).trim() &&
+                        String(
+                            user.userId ||
+                            ""
+                        ).trim() !== myUserId
+                )
             : [];
 
-
-    onlineUsers.innerHTML =
-        "";
-
+    onlineUsers.innerHTML = "";
 
     if (onlineCount) {
 
         onlineCount.textContent =
-            String(
-                list.length
-            );
+            String(list.length);
     }
 
+    if (list.length === 0) {
 
-    debugLog(
-        "RENDER: " +
-        list.length +
-        " user(s)"
-    );
-
-
-    if (
-        list.length ===
-        0
-    ) {
-
-        if (noUsersMessage) {
-
-            noUsersMessage.style.display =
-                "flex";
-
-            onlineUsers.appendChild(
-                noUsersMessage
-            );
-
-        } else {
-
-            const empty =
-                document.createElement(
-                    "div"
-                );
-
-
-            empty.className =
-                "no-users-message";
-
-
-            empty.textContent =
-                "No other users online.";
-
-
-            onlineUsers.appendChild(
-                empty
-            );
-        }
-
+        showNoUsers();
 
         return;
     }
-
 
     if (noUsersMessage) {
 
         noUsersMessage.style.display =
             "none";
     }
-
 
     list.forEach(
         user => {
@@ -987,13 +654,11 @@ function renderOnlineUsers(
                     ""
                 ).trim();
 
-
             const userName =
                 String(
                     user.name ||
                     "User"
                 ).trim();
-
 
             const isBusy =
                 String(
@@ -1008,7 +673,6 @@ function renderOnlineUsers(
                     "div"
                 );
 
-
             item.className =
                 "online-user-item";
 
@@ -1017,7 +681,6 @@ function renderOnlineUsers(
                 document.createElement(
                     "div"
                 );
-
 
             info.className =
                 "online-user-info";
@@ -1028,10 +691,8 @@ function renderOnlineUsers(
                     "div"
                 );
 
-
             avatar.className =
                 "online-user-avatar";
-
 
             avatar.textContent =
                 getInitial(
@@ -1050,10 +711,8 @@ function renderOnlineUsers(
                     "div"
                 );
 
-
             name.className =
                 "online-user-name";
-
 
             name.textContent =
                 userName;
@@ -1064,7 +723,6 @@ function renderOnlineUsers(
                     "div"
                 );
 
-
             status.className =
                 "online-user-status";
 
@@ -1073,7 +731,6 @@ function renderOnlineUsers(
                 document.createElement(
                     "span"
                 );
-
 
             dot.className =
                 "online-status-dot";
@@ -1091,11 +748,9 @@ function renderOnlineUsers(
                     "busy"
                 );
 
-
                 dot.classList.add(
                     "busy"
                 );
-
 
                 statusText.textContent =
                     "Busy";
@@ -1111,7 +766,6 @@ function renderOnlineUsers(
                 dot
             );
 
-
             status.appendChild(
                 statusText
             );
@@ -1121,7 +775,6 @@ function renderOnlineUsers(
                 name
             );
 
-
             details.appendChild(
                 status
             );
@@ -1130,7 +783,6 @@ function renderOnlineUsers(
             info.appendChild(
                 avatar
             );
-
 
             info.appendChild(
                 details
@@ -1142,22 +794,17 @@ function renderOnlineUsers(
                     "button"
                 );
 
-
             button.type =
                 "button";
-
 
             button.className =
                 "online-call-button";
 
-
             button.dataset.userId =
                 userId;
 
-
             button.dataset.userName =
                 userName;
-
 
             button.textContent =
                 isBusy
@@ -1177,11 +824,9 @@ function renderOnlineUsers(
                 info
             );
 
-
             item.appendChild(
                 button
             );
-
 
             onlineUsers.appendChild(
                 item
@@ -1199,22 +844,18 @@ if (onlineUsers) {
 
     onlineUsers.addEventListener(
         "click",
-        event => {
+        function (event) {
 
             const button =
                 event.target.closest(
                     ".online-call-button"
                 );
 
-
             if (!button) {
                 return;
             }
 
-
             event.preventDefault();
-            event.stopPropagation();
-
 
             const receiverId =
                 String(
@@ -1222,13 +863,11 @@ if (onlineUsers) {
                     ""
                 ).trim();
 
-
             const receiverName =
                 String(
                     button.dataset.userName ||
                     "User"
                 ).trim();
-
 
             if (!receiverId) {
 
@@ -1236,10 +875,8 @@ if (onlineUsers) {
                     "This user is unavailable."
                 );
 
-
                 return;
             }
-
 
             if (
                 receiverId ===
@@ -1249,7 +886,6 @@ if (onlineUsers) {
                 return;
             }
 
-
             if (
                 button.classList.contains(
                     "busy"
@@ -1258,7 +894,6 @@ if (onlineUsers) {
 
                 return;
             }
-
 
             callUser(
                 receiverId,
@@ -1270,19 +905,35 @@ if (onlineUsers) {
 
 
 /* ============================================================
-   REFRESH
+   MANUAL REFRESH
 ============================================================ */
 
 async function refreshOnlineUsers() {
 
+    if (!getMyName()) {
+
+        if (nameInput) {
+            nameInput.focus();
+        }
+
+        showNoUsers();
+
+        return;
+    }
+
+    /*
+     * Refresh button က
+     * register + poll ကို တစ်ခါပဲလုပ်မယ်။
+     */
+
     const registered =
         await registerPresence();
 
-
-    if (registered) {
-
-        await pollOnlineUsers();
+    if (!registered) {
+        return;
     }
+
+    await pollOnlineUsers();
 }
 
 
@@ -1290,43 +941,48 @@ if (refreshUsersButton) {
 
     refreshUsersButton.addEventListener(
         "click",
-        async event => {
+        function (event) {
 
             event.preventDefault();
 
+            if (
+                refreshUsersButton.disabled
+            ) {
+                return;
+            }
 
-            try {
+            refreshUsersButton.disabled =
+                true;
 
-                refreshUsersButton.disabled =
-                    true;
+            refreshOnlineUsers()
+                .catch(
+                    error => {
 
-
-                await refreshOnlineUsers();
-
-            } catch (error) {
-
-                debugLog(
-                    "REFRESH FAIL: " +
-                    error.message
-                );
-
-            } finally {
-
-                setTimeout(
+                        console.error(
+                            "Refresh error:",
+                            error
+                        );
+                    }
+                )
+                .finally(
                     () => {
 
-                        if (
-                            refreshUsersButton
-                        ) {
+                        setTimeout(
+                            () => {
 
-                            refreshUsersButton.disabled =
-                                false;
-                        }
+                                if (
+                                    refreshUsersButton
+                                ) {
 
-                    },
-                    500
+                                    refreshUsersButton.disabled =
+                                        false;
+                                }
+
+                            },
+                            400
+                        );
+                    }
                 );
-            }
         }
     );
 }
@@ -1341,7 +997,6 @@ async function updateMyPresence() {
     const name =
         getMyName();
 
-
     if (!name) {
 
         try {
@@ -1352,26 +1007,24 @@ async function updateMyPresence() {
 
         } catch (_) {}
 
-
-        clearOnlineUsers();
-
+        showNoUsers();
 
         setConnectionStatus(
             "Offline"
         );
 
-
         return;
     }
 
-
     saveMyName(name);
 
+    const registered =
+        await registerPresence();
 
-    await registerPresence();
+    if (registered) {
 
-
-    await pollOnlineUsers();
+        await pollOnlineUsers();
+    }
 }
 
 
@@ -1379,31 +1032,36 @@ if (nameInput) {
 
     nameInput.addEventListener(
         "input",
-        () => {
+        function () {
 
             clearTimeout(
                 nameUpdateTimer
             );
 
-
             nameUpdateTimer =
                 setTimeout(
-                    updateMyPresence,
-                    400
+                    function () {
+
+                        updateMyPresence()
+                            .catch(
+                                console.error
+                            );
+
+                    },
+                    500
                 );
         }
     );
 
-
     nameInput.addEventListener(
         "change",
-        updateMyPresence
-    );
+        function () {
 
-
-    nameInput.addEventListener(
-        "blur",
-        updateMyPresence
+            updateMyPresence()
+                .catch(
+                    console.error
+                );
+        }
     );
 }
 
@@ -1420,18 +1078,15 @@ async function startPresence() {
             presenceTimer
         );
 
-
         presenceTimer =
             null;
     }
-
 
     if (onlineUsersTimer) {
 
         clearInterval(
             onlineUsersTimer
         );
-
 
         onlineUsersTimer =
             null;
@@ -1448,31 +1103,18 @@ async function startPresence() {
             "Offline"
         );
 
-
-        clearOnlineUsers();
-
-
-        debugLog(
-            "Waiting for name..."
-        );
-
+        showNoUsers();
 
         return;
     }
 
 
-    debugLog(
-        "Starting presence..."
-    );
-
-
     /*
-     * FIRST REGISTER
+     * First register
      */
 
     const registered =
         await registerPresence();
-
 
     if (registered) {
 
@@ -1481,28 +1123,35 @@ async function startPresence() {
 
 
     /*
-     * HEARTBEAT
+     * Heartbeat
      */
 
     presenceTimer =
         setInterval(
-            async () => {
+            async function () {
 
                 if (
-                    !getMyName()
+                    !getMyName() ||
+                    presenceBusy
                 ) {
-
                     return;
                 }
-
 
                 const ok =
                     await registerPresence();
 
-
                 if (ok) {
 
-                    await pollOnlineUsers();
+                    /*
+                     * Heartbeat က user list ကို
+                     * မလိုအပ်ဘဲ recursive မဖြစ်အောင်
+                     * သီးခြား poll တစ်ခါပဲလုပ်တယ်။
+                     */
+
+                    if (!usersPollBusy) {
+
+                        await pollOnlineUsers();
+                    }
                 }
 
             },
@@ -1511,30 +1160,24 @@ async function startPresence() {
 
 
     /*
-     * USER LIST
+     * Online Users refresh
      */
 
     onlineUsersTimer =
         setInterval(
-            async () => {
+            async function () {
 
                 if (
-                    !presenceBusy &&
-                    !usersPollBusy &&
-                    getMyName()
+                    getMyName() &&
+                    !usersPollBusy
                 ) {
 
                     await pollOnlineUsers();
                 }
 
             },
-            2500
+            3000
         );
-
-
-    debugLog(
-        "Presence started."
-    );
 }
 
 
@@ -1566,13 +1209,11 @@ function setOffline() {
                     }
                 );
 
-
             navigator.sendBeacon(
                 API +
                 "/presence/offline",
                 blob
             );
-
 
             return;
         }
@@ -1613,12 +1254,6 @@ window.addEventListener(
 );
 
 
-window.addEventListener(
-    "beforeunload",
-    setOffline
-);
-
-
 /* ============================================================
    INCOMING CALL POLLING
 ============================================================ */
@@ -1629,10 +1264,8 @@ async function pollIncomingCalls() {
         incomingCallVisible ||
         currentCallId
     ) {
-
         return;
     }
-
 
     try {
 
@@ -1645,14 +1278,12 @@ async function pollIncomingCalls() {
                 }
             );
 
-
         const calls =
             Array.isArray(
                 data.calls
             )
                 ? data.calls
                 : [];
-
 
         const call =
             calls.find(
@@ -1663,9 +1294,8 @@ async function pollIncomingCalls() {
                         ""
                     ) === myUserId &&
                     item.status ===
-                        "ringing"
+                    "ringing"
             );
-
 
         if (call) {
 
@@ -1685,7 +1315,7 @@ async function pollIncomingCalls() {
 
 
 /* ============================================================
-   INCOMING TIMER
+   START INCOMING POLLING
 ============================================================ */
 
 function startIncomingCallPolling() {
@@ -1697,9 +1327,7 @@ function startIncomingCallPolling() {
         );
     }
 
-
     pollIncomingCalls();
-
 
     incomingCallTimer =
         setInterval(
@@ -1713,22 +1341,17 @@ function startIncomingCallPolling() {
    SHOW INCOMING
 ============================================================ */
 
-function showIncomingCall(
-    call
-) {
+function showIncomingCall(call) {
 
     if (!call) {
         return;
     }
 
-
     incomingCall =
         call;
 
-
     incomingCallVisible =
         true;
-
 
     if (incomingCallerName) {
 
@@ -1736,7 +1359,6 @@ function showIncomingCall(
             call.callerName ||
             "Someone";
     }
-
 
     if (incomingCallOverlay) {
 
@@ -1755,10 +1377,8 @@ function hideIncomingCall() {
     incomingCallVisible =
         false;
 
-
     incomingCall =
         null;
-
 
     if (incomingCallOverlay) {
 
@@ -1778,10 +1398,8 @@ async function acceptIncomingCall() {
         return;
     }
 
-
     const call =
         incomingCall;
-
 
     if (acceptCallButton) {
 
@@ -1789,13 +1407,11 @@ async function acceptIncomingCall() {
             true;
     }
 
-
     if (declineCallButton) {
 
         declineCallButton.disabled =
             true;
     }
-
 
     try {
 
@@ -1811,33 +1427,26 @@ async function acceptIncomingCall() {
                 }
             );
 
-
         const acceptedCall =
             data.call ||
             call;
 
-
         hideIncomingCall();
-
 
         currentCallId =
             acceptedCall.callId ||
             call.callId;
 
-
         currentCallRole =
             "receiver";
-
 
         currentRoom =
             acceptedCall.room ||
             call.room ||
             "";
 
-
         currentName =
             getMyName();
-
 
         if (!currentRoom) {
 
@@ -1845,7 +1454,6 @@ async function acceptIncomingCall() {
                 "Call room is missing."
             );
         }
-
 
         await startJaaSCall(
             currentName,
@@ -1859,9 +1467,7 @@ async function acceptIncomingCall() {
             error
         );
 
-
         hideIncomingCall();
-
 
         alert(
             error.message ||
@@ -1875,7 +1481,6 @@ async function acceptIncomingCall() {
             acceptCallButton.disabled =
                 false;
         }
-
 
         if (declineCallButton) {
 
@@ -1905,10 +1510,8 @@ async function declineIncomingCall() {
         return;
     }
 
-
     const call =
         incomingCall;
-
 
     if (acceptCallButton) {
 
@@ -1916,13 +1519,11 @@ async function declineIncomingCall() {
             true;
     }
 
-
     if (declineCallButton) {
 
         declineCallButton.disabled =
             true;
     }
-
 
     try {
 
@@ -1948,20 +1549,17 @@ async function declineIncomingCall() {
 
         hideIncomingCall();
 
-
         if (acceptCallButton) {
 
             acceptCallButton.disabled =
                 false;
         }
 
-
         if (declineCallButton) {
 
             declineCallButton.disabled =
                 false;
         }
-
 
         await pollOnlineUsers();
     }
@@ -1991,17 +1589,14 @@ async function callUser(
             receiverId || ""
         ).trim();
 
-
     receiverName =
         String(
             receiverName ||
             "User"
         ).trim();
 
-
     const callerName =
         getMyName();
-
 
     if (!callerName) {
 
@@ -2009,16 +1604,13 @@ async function callUser(
             "Please enter your name first."
         );
 
-
         if (nameInput) {
 
             nameInput.focus();
         }
 
-
         return;
     }
-
 
     if (!receiverId) {
 
@@ -2026,19 +1618,15 @@ async function callUser(
             "This user is unavailable."
         );
 
-
         return;
     }
-
 
     if (
         receiverId ===
         myUserId
     ) {
-
         return;
     }
-
 
     if (currentCallId) {
 
@@ -2046,33 +1634,26 @@ async function callUser(
             "You are already in a call."
         );
 
-
         return;
     }
-
 
     currentName =
         callerName;
 
-
     currentReceiverId =
         receiverId;
-
 
     currentReceiverName =
         receiverName;
 
-
     const privateRoom =
         generatePrivateRoom();
-
 
     try {
 
         setConnectionStatus(
             "Calling..."
         );
-
 
         const data =
             await apiRequest(
@@ -2095,11 +1676,9 @@ async function callUser(
                 }
             );
 
-
         const call =
             data.call ||
             data;
-
 
         currentCallId =
             String(
@@ -2107,17 +1686,14 @@ async function callUser(
                 ""
             );
 
-
         currentCallRole =
             "caller";
-
 
         currentRoom =
             String(
                 call.room ||
                 privateRoom
             );
-
 
         if (!currentCallId) {
 
@@ -2126,11 +1702,9 @@ async function callUser(
             );
         }
 
-
         showCallingScreen(
             receiverName
         );
-
 
         startOutgoingCallStatusPolling();
 
@@ -2141,12 +1715,9 @@ async function callUser(
             error
         );
 
-
         hideCallingScreen();
 
-
         resetCallState();
-
 
         alert(
             error.message ||
@@ -2160,16 +1731,14 @@ async function callUser(
    CALLING UI
 ============================================================ */
 
-function showCallingScreen(
-    name
-) {
+function showCallingScreen(name) {
 
     if (callingReceiverName) {
 
         callingReceiverName.textContent =
-            name || "User";
+            name ||
+            "User";
     }
-
 
     if (callingOverlay) {
 
@@ -2206,9 +1775,7 @@ function startOutgoingCallStatusPolling() {
 
     stopOutgoingCallStatusPolling();
 
-
     checkOutgoingCallStatus();
-
 
     callStatusTimer =
         setInterval(
@@ -2226,7 +1793,6 @@ function stopOutgoingCallStatusPolling() {
             callStatusTimer
         );
 
-
         callStatusTimer =
             null;
     }
@@ -2238,7 +1804,6 @@ async function checkOutgoingCallStatus() {
     if (!currentCallId) {
         return;
     }
-
 
     try {
 
@@ -2254,16 +1819,13 @@ async function checkOutgoingCallStatus() {
                 }
             );
 
-
         const call =
             data.call ||
             data;
 
-
         const status =
             call.status ||
             data.status;
-
 
         if (
             status ===
@@ -2272,19 +1834,15 @@ async function checkOutgoingCallStatus() {
 
             stopOutgoingCallStatusPolling();
 
-
             hideCallingScreen();
-
 
             await startJaaSCall(
                 currentName,
                 currentRoom
             );
 
-
             return;
         }
-
 
         if (
             status ===
@@ -2293,9 +1851,7 @@ async function checkOutgoingCallStatus() {
 
             stopOutgoingCallStatusPolling();
 
-
             hideCallingScreen();
-
 
             alert(
                 (
@@ -2305,13 +1861,10 @@ async function checkOutgoingCallStatus() {
                 " declined the call."
             );
 
-
             resetCallState();
-
 
             return;
         }
-
 
         if (
             status ===
@@ -2320,16 +1873,12 @@ async function checkOutgoingCallStatus() {
 
             stopOutgoingCallStatusPolling();
 
-
             hideCallingScreen();
-
 
             resetCallState();
 
-
             return;
         }
-
 
         if (
             status ===
@@ -2338,17 +1887,13 @@ async function checkOutgoingCallStatus() {
 
             stopOutgoingCallStatusPolling();
 
-
             hideCallingScreen();
-
 
             alert(
                 "The call expired."
             );
 
-
             resetCallState();
-
 
             return;
         }
@@ -2376,13 +1921,10 @@ async function cancelOutgoingCall() {
         return;
     }
 
-
     const callId =
         currentCallId;
 
-
     stopOutgoingCallStatusPolling();
-
 
     try {
 
@@ -2408,9 +1950,7 @@ async function cancelOutgoingCall() {
 
         hideCallingScreen();
 
-
         resetCallState();
-
 
         await pollOnlineUsers();
     }
@@ -2421,15 +1961,13 @@ async function cancelOutgoingCall() {
    LOAD JAAS
 ============================================================ */
 
-function loadJaaSApi(
-    appId
-) {
+function loadJaaSApi(appId) {
 
     return new Promise(
-        (
+        function (
             resolve,
             reject
-        ) => {
+        ) {
 
             if (
                 window.JitsiMeetExternalAPI
@@ -2439,16 +1977,13 @@ function loadJaaSApi(
                     window.JitsiMeetExternalAPI
                 );
 
-
                 return;
             }
-
 
             const script =
                 document.createElement(
                     "script"
                 );
-
 
             script.src =
                 "https://" +
@@ -2457,13 +1992,11 @@ function loadJaaSApi(
                 appId +
                 "/external_api.js";
 
-
             script.async =
                 true;
 
-
             script.onload =
-                () => {
+                function () {
 
                     if (
                         window.JitsiMeetExternalAPI
@@ -2483,9 +2016,8 @@ function loadJaaSApi(
                     }
                 };
 
-
             script.onerror =
-                () => {
+                function () {
 
                     reject(
                         new Error(
@@ -2493,7 +2025,6 @@ function loadJaaSApi(
                         )
                     );
                 };
-
 
             document.head.appendChild(
                 script
@@ -2519,13 +2050,11 @@ async function startJaaSCall(
         );
     }
 
-
     try {
 
         setConnectionStatus(
             "Connecting..."
         );
-
 
         const tokenData =
             await apiRequest(
@@ -2540,7 +2069,6 @@ async function startJaaSCall(
                 }
             );
 
-
         if (
             !tokenData.appId ||
             !tokenData.token
@@ -2551,11 +2079,9 @@ async function startJaaSCall(
             );
         }
 
-
         await loadJaaSApi(
             tokenData.appId
         );
-
 
         if (homeScreen) {
 
@@ -2563,18 +2089,15 @@ async function startJaaSCall(
                 "none";
         }
 
-
         if (callScreen) {
 
             callScreen.style.display =
                 "flex";
 
-
             callScreen.classList.add(
                 "active"
             );
         }
-
 
         if (roomLabel) {
 
@@ -2582,13 +2105,11 @@ async function startJaaSCall(
                 "Connected";
         }
 
-
         if (meet) {
 
             meet.innerHTML =
                 "";
         }
-
 
         if (jitsiApi) {
 
@@ -2597,26 +2118,21 @@ async function startJaaSCall(
                 leavingJitsi =
                     true;
 
-
                 jitsiApi.dispose();
 
             } catch (_) {}
 
-
             jitsiApi =
                 null;
-
 
             leavingJitsi =
                 false;
         }
 
-
         const roomName =
             tokenData.appId +
             "/" +
             room;
-
 
         const options = {
 
@@ -2664,17 +2180,15 @@ async function startJaaSCall(
             }
         };
 
-
         jitsiApi =
             new window.JitsiMeetExternalAPI(
                 JAAS_DOMAIN,
                 options
             );
 
-
         jitsiApi.addEventListener(
             "videoConferenceJoined",
-            () => {
+            function () {
 
                 setConnectionStatus(
                     "Connected"
@@ -2682,10 +2196,9 @@ async function startJaaSCall(
             }
         );
 
-
         jitsiApi.addEventListener(
             "videoConferenceLeft",
-            () => {
+            function () {
 
                 if (
                     !leavingJitsi
@@ -2696,10 +2209,9 @@ async function startJaaSCall(
             }
         );
 
-
         jitsiApi.addEventListener(
             "readyToClose",
-            () => {
+            function () {
 
                 if (
                     !leavingJitsi
@@ -2717,12 +2229,10 @@ async function startJaaSCall(
             error
         );
 
-
         alert(
             error.message ||
             "Unable to join video call."
         );
-
 
         if (callScreen) {
 
@@ -2730,18 +2240,15 @@ async function startJaaSCall(
                 "active"
             );
 
-
             callScreen.style.display =
                 "none";
         }
-
 
         if (homeScreen) {
 
             homeScreen.style.display =
                 "flex";
         }
-
 
         resetCallState();
     }
@@ -2757,14 +2264,12 @@ async function leaveCall() {
     const callId =
         currentCallId;
 
-
     stopOutgoingCallStatusPolling();
-
 
     if (
         callId &&
         currentCallRole ===
-            "caller"
+        "caller"
     ) {
 
         try {
@@ -2789,9 +2294,7 @@ async function leaveCall() {
         }
     }
 
-
     disposeJitsi();
-
 
     if (callScreen) {
 
@@ -2799,11 +2302,9 @@ async function leaveCall() {
             "active"
         );
 
-
         callScreen.style.display =
             "none";
     }
-
 
     if (homeScreen) {
 
@@ -2811,12 +2312,9 @@ async function leaveCall() {
             "flex";
     }
 
-
     resetCallState();
 
-
     await registerPresence();
-
 
     await pollOnlineUsers();
 }
@@ -2832,12 +2330,10 @@ function disposeJitsi() {
         return;
     }
 
-
     try {
 
         leavingJitsi =
             true;
-
 
         jitsiApi.dispose();
 
@@ -2852,7 +2348,6 @@ function disposeJitsi() {
 
         jitsiApi =
             null;
-
 
         leavingJitsi =
             false;
@@ -2869,31 +2364,23 @@ function resetCallState() {
     currentCallId =
         "";
 
-
     currentCallRole =
         "";
-
 
     currentRoom =
         "";
 
-
     currentReceiverId =
         "";
-
 
     currentReceiverName =
         "";
 
-
     stopOutgoingCallStatusPolling();
-
 
     hideCallingScreen();
 
-
     hideIncomingCall();
-
 
     setConnectionStatus(
         getMyName()
@@ -2911,7 +2398,7 @@ if (backButton) {
 
     backButton.addEventListener(
         "click",
-        async () => {
+        async function () {
 
             if (currentCallId) {
 
@@ -2920,21 +2407,16 @@ if (backButton) {
                         "Leave this call?"
                     );
 
-
                 if (!leave) {
                     return;
                 }
 
-
                 await leaveCall();
-
 
                 return;
             }
 
-
             disposeJitsi();
-
 
             if (callScreen) {
 
@@ -2942,18 +2424,15 @@ if (backButton) {
                     "active"
                 );
 
-
                 callScreen.style.display =
                     "none";
             }
-
 
             if (homeScreen) {
 
                 homeScreen.style.display =
                     "flex";
             }
-
 
             resetCallState();
         }
@@ -2967,93 +2446,38 @@ if (backButton) {
 
 (async function initialize() {
 
-    debugLog(
-        "App starting..."
-    );
-
-
-    debugLog(
-        "User ID created"
-    );
-
-
     const savedName =
         loadMyName();
 
+    if (!savedName) {
 
-    debugLog(
-        savedName
-            ? "Name: " + savedName
-            : "Name not entered"
-    );
+        setConnectionStatus(
+            "Offline"
+        );
 
+        showNoUsers();
 
-    await startPresence();
+    } else {
 
+        await startPresence();
+    }
 
     startIncomingCallPolling();
-
-
-    debugLog(
-        "App initialized"
-    );
 
 })();
 
 
 /* ============================================================
-   DEBUG FUNCTIONS
+   DEBUG HELPERS
 ============================================================ */
 
 window.getMyUserId =
-    () => myUserId;
+    function () {
+        return myUserId;
+    };
 
 
 window.getMyName =
-    () => getMyName();
-
-
-window.testPresence =
-    async () => {
-
-        debugLog(
-            "===== MANUAL TEST ====="
-        );
-
-
-        debugLog(
-            "ID: " +
-            myUserId
-        );
-
-
-        debugLog(
-            "NAME: " +
-            getMyName()
-        );
-
-
-        const registered =
-            await registerPresence();
-
-
-        debugLog(
-            "REGISTER: " +
-            registered
-        );
-
-
-        const polled =
-            await pollOnlineUsers();
-
-
-        debugLog(
-            "POLL: " +
-            polled
-        );
-
-
-        debugLog(
-            "===== TEST END ====="
-        );
+    function () {
+        return getMyName();
     };
