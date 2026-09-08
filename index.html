@@ -1,7 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
@@ -9,19 +12,33 @@
 
     <title>1v1 Video Call</title>
 
-    <link rel="stylesheet" href="style.css">
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
 </head>
+
 
 <body>
 
 <div class="app">
 
+
+    <!-- =====================================================
+         TOP BAR
+    ====================================================== -->
+
     <header class="topbar">
 
         <div class="brand">
-            <div class="logo">V</div>
+
+            <div class="logo">
+                V
+            </div>
 
             <div>
+
                 <div class="title">
                     Video Call
                 </div>
@@ -29,25 +46,44 @@
                 <div class="subtitle">
                     Private 1 vs 1
                 </div>
+
             </div>
+
         </div>
 
+
         <div class="status">
+
             <span></span>
+
             Ready
+
         </div>
 
     </header>
 
 
+
+    <!-- =====================================================
+         MAIN
+    ====================================================== -->
+
     <main>
 
-        <!-- HOME -->
+
+        <!-- =================================================
+             HOME
+        ================================================== -->
 
         <section
             id="homeScreen"
             class="home-screen"
         >
+
+
+            <!-- =============================================
+                 HERO
+            ============================================== -->
 
             <div class="hero">
 
@@ -55,9 +91,11 @@
                     📹
                 </div>
 
+
                 <h1>
                     1 vs 1 Video Call
                 </h1>
+
 
                 <p>
                     Create a private room or enter a room
@@ -67,11 +105,22 @@
             </div>
 
 
+
+            <!-- =============================================
+                 USER CARD
+            ============================================== -->
+
             <div class="card">
+
+
+                <!-- =========================================
+                     NAME
+                ========================================== -->
 
                 <label>
                     Your Name
                 </label>
+
 
                 <input
                     id="nameInput"
@@ -82,9 +131,118 @@
                 >
 
 
-                <label class="room-label">
+
+                <!-- =========================================
+                     USER ID
+                ========================================== -->
+
+                <label
+                    class="room-label"
+                >
+                    Your User ID
+                </label>
+
+
+                <div
+                    style="
+                        display:flex;
+                        gap:8px;
+                        align-items:center;
+                    "
+                >
+
+                    <input
+                        id="myUserIdInput"
+                        type="text"
+                        readonly
+                        style="
+                            flex:1;
+                            opacity:.8;
+                            font-size:12px;
+                        "
+                    >
+
+
+                    <button
+                        id="copyUserIdButton"
+                        type="button"
+                        class="secondary-button"
+                        style="
+                            width:auto;
+                            white-space:nowrap;
+                            padding:12px 14px;
+                        "
+                    >
+                        Copy
+                    </button>
+
+                </div>
+
+
+
+                <!-- =========================================
+                     CALL USER
+                ========================================== -->
+
+                <label
+                    class="room-label"
+                >
+                    Call User
+                </label>
+
+
+                <input
+                    id="receiverIdInput"
+                    type="text"
+                    maxlength="100"
+                    placeholder="Enter receiver User ID"
+                    autocomplete="off"
+                >
+
+
+                <input
+                    id="receiverNameInput"
+                    type="text"
+                    maxlength="40"
+                    placeholder="Receiver name (optional)"
+                    autocomplete="off"
+                >
+
+
+                <button
+                    id="callUserButton"
+                    class="primary-button"
+                    type="button"
+                >
+                    📞 Call User
+                </button>
+
+
+
+                <!-- =========================================
+                     DIVIDER
+                ========================================== -->
+
+                <div class="divider">
+
+                    <span>
+                        OR
+                    </span>
+
+                </div>
+
+
+
+                <!-- =========================================
+                     ROOM CODE
+                ========================================== -->
+
+                <label
+                    class="room-label"
+                >
                     Room Code
                 </label>
+
 
                 <input
                     id="roomInput"
@@ -98,19 +256,25 @@
                 <button
                     id="joinButton"
                     class="primary-button"
+                    type="button"
                 >
                     Join Video Call
                 </button>
 
 
                 <div class="divider">
-                    <span>OR</span>
+
+                    <span>
+                        OR
+                    </span>
+
                 </div>
 
 
                 <button
                     id="createButton"
                     class="secondary-button"
+                    type="button"
                 >
                     Create New Room
                 </button>
@@ -118,21 +282,30 @@
             </div>
 
 
+
+            <!-- =============================================
+                 NOTICE
+            ============================================== -->
+
             <div class="notice">
 
                 <div class="notice-icon">
                     🔒
                 </div>
 
+
                 <div>
+
                     <strong>
                         Private 1 vs 1 room
                     </strong>
 
+
                     <p>
-                        Share the room code with only
-                        the person you want to call.
+                        Share your User ID with the person
+                        who wants to call you.
                     </p>
+
                 </div>
 
             </div>
@@ -140,21 +313,28 @@
         </section>
 
 
-        <!-- CALL -->
+
+        <!-- =================================================
+             CALL SCREEN
+        ================================================== -->
 
         <section
             id="callScreen"
             class="call-screen"
         >
 
+
             <div class="call-topbar">
+
 
                 <button
                     id="backButton"
                     class="back-button"
+                    type="button"
                 >
                     ←
                 </button>
+
 
 
                 <div class="call-info">
@@ -163,6 +343,7 @@
                         Private Call
                     </strong>
 
+
                     <span id="roomLabel">
                         -
                     </span>
@@ -170,14 +351,17 @@
                 </div>
 
 
+
                 <button
                     id="copyButton"
                     class="copy-button"
+                    type="button"
                 >
                     Copy Room
                 </button>
 
             </div>
+
 
 
             <div
@@ -192,7 +376,244 @@
 </div>
 
 
+
+<!-- =========================================================
+     APP SCRIPT
+========================================================== -->
+
 <script src="app.js"></script>
 
+
+<!-- =========================================================
+     USER ID UI CONNECTION
+     
+     This connects the HTML to:
+     
+     window.getMyUserId()
+     window.callUser()
+========================================================== -->
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+
+        /* ================================================
+           USER ID
+        ================================================= */
+
+        const myUserIdInput =
+            document.getElementById(
+                "myUserIdInput"
+            );
+
+
+        if (
+            myUserIdInput &&
+            typeof window.getMyUserId ===
+                "function"
+        ) {
+
+            myUserIdInput.value =
+                window.getMyUserId();
+
+        }
+
+
+
+        /* ================================================
+           COPY USER ID
+        ================================================= */
+
+        const copyUserIdButton =
+            document.getElementById(
+                "copyUserIdButton"
+            );
+
+
+        if (copyUserIdButton) {
+
+            copyUserIdButton.addEventListener(
+                "click",
+                async function () {
+
+                    const userId =
+                        myUserIdInput.value;
+
+
+                    if (!userId) {
+
+                        return;
+
+                    }
+
+
+                    try {
+
+                        await navigator.clipboard.writeText(
+                            userId
+                        );
+
+
+                        const oldText =
+                            copyUserIdButton.textContent;
+
+
+                        copyUserIdButton.textContent =
+                            "Copied!";
+
+
+                        setTimeout(
+                            function () {
+
+                                copyUserIdButton.textContent =
+                                    oldText;
+
+                            },
+                            1500
+                        );
+
+
+                    } catch (_) {
+
+                        prompt(
+                            "Copy your User ID:",
+                            userId
+                        );
+
+                    }
+
+                }
+            );
+
+        }
+
+
+
+        /* ================================================
+           CALL USER
+        ================================================= */
+
+        const callUserButton =
+            document.getElementById(
+                "callUserButton"
+            );
+
+
+        const receiverIdInput =
+            document.getElementById(
+                "receiverIdInput"
+            );
+
+
+        const receiverNameInput =
+            document.getElementById(
+                "receiverNameInput"
+            );
+
+
+        if (callUserButton) {
+
+            callUserButton.addEventListener(
+                "click",
+                async function () {
+
+                    const receiverId =
+                        receiverIdInput.value.trim();
+
+
+                    const receiverName =
+                        receiverNameInput.value.trim();
+
+
+                    if (!receiverId) {
+
+                        alert(
+                            "Please enter the receiver User ID."
+                        );
+
+
+                        receiverIdInput.focus();
+
+
+                        return;
+
+                    }
+
+
+                    if (
+                        typeof window.callUser !==
+                            "function"
+                    ) {
+
+                        alert(
+                            "Call system is not ready."
+                        );
+
+
+                        return;
+
+                    }
+
+
+                    callUserButton.disabled =
+                        true;
+
+
+                    try {
+
+                        await window.callUser(
+                            receiverId,
+                            receiverName
+                        );
+
+
+                    } finally {
+
+                        callUserButton.disabled =
+                            false;
+
+                    }
+
+                }
+            );
+
+        }
+
+
+
+        /* ================================================
+           ENTER KEY
+        ================================================= */
+
+        if (receiverIdInput) {
+
+            receiverIdInput.addEventListener(
+                "keydown",
+                function (event) {
+
+                    if (
+                        event.key ===
+                        "Enter"
+                    ) {
+
+                        callUserButton.click();
+
+                    }
+
+                }
+            );
+
+        }
+
+    }
+);
+
+</script>
+
+
 </body>
+
 </html>
