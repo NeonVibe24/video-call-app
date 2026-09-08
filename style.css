@@ -13,6 +13,7 @@ body {
 body {
     background: #080a0f;
     color: #ffffff;
+
     font-family:
         Arial,
         Helvetica,
@@ -28,6 +29,11 @@ button {
     cursor: pointer;
 }
 
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
 .app {
     width: 100%;
     min-height: 100vh;
@@ -41,9 +47,9 @@ button {
 }
 
 
-/* =========================
+/* =========================================================
    TOP BAR
-========================= */
+========================================================= */
 
 .topbar {
     height: 70px;
@@ -62,6 +68,7 @@ button {
 .brand {
     display: flex;
     align-items: center;
+
     gap: 11px;
 }
 
@@ -97,6 +104,7 @@ button {
 .status {
     display: flex;
     align-items: center;
+
     gap: 7px;
 
     color: #858d9c;
@@ -104,19 +112,24 @@ button {
     font-size: 13px;
 }
 
-.status span {
+.status span:first-child {
     width: 8px;
     height: 8px;
+
+    flex-shrink: 0;
 
     border-radius: 50%;
 
     background: #22c55e;
+
+    box-shadow:
+        0 0 8px rgba(34, 197, 94, 0.7);
 }
 
 
-/* =========================
+/* =========================================================
    HOME
-========================= */
+========================================================= */
 
 .home-screen {
     min-height: calc(100vh - 70px);
@@ -153,12 +166,16 @@ button {
     background: #111621;
 
     font-size: 34px;
+
+    box-shadow:
+        0 15px 40px rgba(0, 0, 0, 0.25);
 }
 
 .hero h1 {
     margin: 0;
 
     font-size: 31px;
+    line-height: 1.2;
 }
 
 .hero p {
@@ -169,13 +186,14 @@ button {
     color: #8992a2;
 
     font-size: 14px;
+
     line-height: 1.6;
 }
 
 
-/* =========================
+/* =========================================================
    CARD
-========================= */
+========================================================= */
 
 .card {
     width: 100%;
@@ -208,9 +226,9 @@ button {
 }
 
 
-/* =========================
+/* =========================================================
    INPUTS
-========================= */
+========================================================= */
 
 .card input {
     width: 100%;
@@ -247,36 +265,271 @@ button {
 }
 
 
-/* =========================
-   USER ID
-========================= */
+/* =========================================================
+   ONLINE USERS HEADER
+========================================================= */
 
-.user-id-row {
+.online-users-header {
     width: 100%;
 
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin-top: 20px;
+    margin-bottom: 10px;
+
+    padding-top: 18px;
+
+    border-top: 1px solid #252a34;
+}
+
+.online-users-header > div {
     display: flex;
     align-items: center;
 
     gap: 8px;
 }
 
-.user-id-row input {
-    flex: 1;
+.online-users-header strong {
+    color: #ffffff;
 
-    min-width: 0;
+    font-size: 14px;
 }
 
-.copy-id-button {
-    width: 82px;
-    height: 50px;
+.online-count {
+    min-width: 22px;
+    height: 21px;
 
-    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0 6px;
+
+    border-radius: 20px;
+
+    background: #172554;
+
+    color: #60a5fa;
+
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.refresh-button {
+    width: 34px;
+    height: 34px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     border: 1px solid #303744;
 
-    border-radius: 10px;
+    border-radius: 9px;
 
     background: #191d25;
+
+    color: #ffffff;
+
+    font-size: 19px;
+
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease;
+}
+
+.refresh-button:hover {
+    background: #222732;
+}
+
+.refresh-button:active {
+    transform: rotate(90deg) scale(0.95);
+}
+
+
+/* =========================================================
+   ONLINE USERS LIST
+========================================================= */
+
+.online-users {
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 8px;
+
+    max-height: 280px;
+
+    overflow-y: auto;
+
+    padding-right: 2px;
+}
+
+
+/* Scrollbar */
+
+.online-users::-webkit-scrollbar {
+    width: 5px;
+}
+
+.online-users::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.online-users::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+
+    background: #303744;
+}
+
+.online-users::-webkit-scrollbar-thumb:hover {
+    background: #414958;
+}
+
+
+/* =========================================================
+   ONLINE USER ITEM
+========================================================= */
+
+.online-user {
+    width: 100%;
+
+    min-height: 62px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 11px;
+
+    padding: 9px 10px;
+
+    border: 1px solid #252c38;
+
+    border-radius: 12px;
+
+    background: #0c1017;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.1s ease;
+}
+
+.online-user:hover {
+    background: #121823;
+
+    border-color: #303a4b;
+}
+
+.online-user:active {
+    transform: scale(0.99);
+}
+
+
+/* =========================================================
+   USER AVATAR
+========================================================= */
+
+.online-user-avatar {
+    width: 42px;
+    height: 42px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid #334155;
+
+    border-radius: 50%;
+
+    background:
+        linear-gradient(
+            135deg,
+            #1e3a8a,
+            #2563eb
+        );
+
+    color: #ffffff;
+
+    font-size: 16px;
+    font-weight: 800;
+
+    position: relative;
+}
+
+.online-user-avatar::after {
+    content: "";
+
+    position: absolute;
+
+    right: -1px;
+    bottom: 0;
+
+    width: 10px;
+    height: 10px;
+
+    border: 2px solid #0c1017;
+
+    border-radius: 50%;
+
+    background: #22c55e;
+}
+
+
+/* =========================================================
+   USER INFO
+========================================================= */
+
+.online-user-info {
+    flex: 1;
+
+    min-width: 0;
+
+    overflow: hidden;
+}
+
+.online-user-name {
+    overflow: hidden;
+
+    color: #ffffff;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+.online-user-status {
+    margin-top: 4px;
+
+    color: #22c55e;
+
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   USER CALL BUTTON
+========================================================= */
+
+.online-user-call {
+    min-width: 68px;
+    height: 38px;
+
+    flex-shrink: 0;
+
+    border: none;
+
+    border-radius: 9px;
+
+    background: #16a34a;
 
     color: #ffffff;
 
@@ -285,42 +538,179 @@ button {
 
     transition:
         background 0.2s ease,
-        transform 0.1s ease;
+        transform 0.1s ease,
+        opacity 0.2s ease;
 }
 
-.copy-id-button:hover {
-    background: #222732;
+.online-user-call:hover {
+    background: #15803d;
 }
 
-.copy-id-button:active {
-    transform: scale(0.97);
+.online-user-call:active {
+    transform: scale(0.95);
 }
 
-
-/* =========================
-   RECEIVER SECTION
-========================= */
-
-.receiver-section {
-    margin-top: 18px;
-
-    padding-top: 18px;
-
-    border-top: 1px solid #252a34;
-}
-
-.receiver-section label {
-    margin-bottom: 8px;
-}
-
-.receiver-section input + label {
-    margin-top: 13px;
+.online-user-call:disabled {
+    background: #303744;
 }
 
 
-/* =========================
+/* =========================================================
+   BUSY USER
+========================================================= */
+
+.online-user.busy {
+    opacity: 0.65;
+}
+
+.online-user.busy .online-user-avatar::after {
+    background: #f59e0b;
+}
+
+.online-user-busy {
+    color: #f59e0b;
+
+    font-size: 11px;
+}
+
+.online-user-call.busy-button {
+    border: 1px solid #343b48;
+
+    background: #191d25;
+
+    color: #8b94a4;
+}
+
+
+/* =========================================================
+   NO USERS
+========================================================= */
+
+.no-users {
+    width: 100%;
+
+    min-height: 115px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    padding: 18px;
+
+    border: 1px dashed #2b313e;
+
+    border-radius: 12px;
+
+    background: #0c1017;
+
+    color: #7f8796;
+
+    font-size: 13px;
+
+    text-align: center;
+}
+
+.no-users-icon {
+    margin-bottom: 7px;
+
+    font-size: 24px;
+}
+
+.no-users small {
+    display: block;
+
+    margin-top: 5px;
+
+    color: #555e6d;
+
+    font-size: 10px;
+}
+
+
+/* =========================================================
+   LOADING USERS
+========================================================= */
+
+.users-loading {
+    width: 100%;
+
+    min-height: 85px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid #252c38;
+
+    border-radius: 12px;
+
+    background: #0c1017;
+
+    color: #737c8c;
+
+    font-size: 12px;
+}
+
+.users-loading::before {
+    content: "";
+
+    width: 15px;
+    height: 15px;
+
+    margin-right: 9px;
+
+    border: 2px solid #303744;
+
+    border-top-color: #60a5fa;
+
+    border-radius: 50%;
+
+    animation:
+        userLoadingSpin 0.8s linear infinite;
+}
+
+@keyframes userLoadingSpin {
+
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+
+}
+
+
+/* =========================================================
+   ERROR USERS
+========================================================= */
+
+.users-error {
+    width: 100%;
+
+    padding: 13px;
+
+    border: 1px solid #3f2529;
+
+    border-radius: 12px;
+
+    background: #171013;
+
+    color: #f87171;
+
+    font-size: 12px;
+
+    line-height: 1.5;
+
+    text-align: center;
+}
+
+
+/* =========================================================
    BUTTONS
-========================= */
+========================================================= */
 
 .primary-button,
 .secondary-button {
@@ -369,41 +759,15 @@ button {
     transform: scale(0.98);
 }
 
-.primary-button:disabled,
-.secondary-button:disabled,
-.copy-id-button:disabled {
-    cursor: not-allowed;
 
-    opacity: 0.55;
-}
-
-
-/* =========================
-   CALL USER BUTTON
-========================= */
-
-#callUserButton {
-    margin-top: 14px;
-
-    background: #16a34a;
-}
-
-#callUserButton:hover {
-    background: #15803d;
-}
-
-#callUserButton:active {
-    transform: scale(0.98);
-}
-
-
-/* =========================
+/* =========================================================
    DIVIDER
-========================= */
+========================================================= */
 
 .divider {
     display: flex;
     align-items: center;
+
     gap: 12px;
 
     margin: 20px 0;
@@ -425,15 +789,16 @@ button {
 }
 
 
-/* =========================
+/* =========================================================
    NOTICE
-========================= */
+========================================================= */
 
 .notice {
     width: 100%;
     max-width: 410px;
 
     display: flex;
+
     gap: 10px;
 
     margin-top: 17px;
@@ -468,9 +833,9 @@ button {
 }
 
 
-/* =========================
-   CALL
-========================= */
+/* =========================================================
+   CALL SCREEN
+========================================================= */
 
 .call-screen {
     display: none;
@@ -578,11 +943,11 @@ button {
 }
 
 
-/* =========================
-   INCOMING CALL
-========================= */
+/* =========================================================
+   INCOMING CALL OVERLAY
+========================================================= */
 
-.incoming-call-overlay {
+.call-overlay {
     position: fixed;
 
     inset: 0;
@@ -601,11 +966,16 @@ button {
     backdrop-filter: blur(7px);
 }
 
+
+/* =========================================================
+   INCOMING CARD
+========================================================= */
+
 .incoming-call-card {
     width: 100%;
     max-width: 360px;
 
-    padding: 25px 22px;
+    padding: 28px 22px;
 
     border: 1px solid #303746;
 
@@ -617,29 +987,122 @@ button {
         0 25px 80px rgba(0, 0, 0, 0.65);
 
     text-align: center;
+
+    animation:
+        callCardIn 0.25s ease-out;
 }
 
-.incoming-call-card h3 {
-    margin: 0 0 8px;
+@keyframes callCardIn {
+
+    from {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+}
+
+
+/* =========================================================
+   INCOMING ICON
+========================================================= */
+
+.incoming-icon {
+    width: 68px;
+    height: 68px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin: 0 auto 16px;
+
+    border: 1px solid #166534;
+
+    border-radius: 50%;
+
+    background: #052e16;
+
+    font-size: 29px;
+
+    animation:
+        incomingPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes incomingPulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+        box-shadow:
+            0 0 0 0 rgba(34, 197, 94, 0.35);
+    }
+
+    50% {
+        transform: scale(1.05);
+        box-shadow:
+            0 0 0 12px rgba(34, 197, 94, 0);
+    }
+
+}
+
+
+/* =========================================================
+   INCOMING TEXT
+========================================================= */
+
+.incoming-title {
+    margin-bottom: 7px;
+
+    color: #ffffff;
 
     font-size: 21px;
+    font-weight: 700;
 }
 
-.incoming-call-card p {
-    margin: 0 0 22px;
+.incoming-name {
+    max-width: 280px;
+
+    margin: 0 auto;
+
+    overflow: hidden;
+
+    color: #60a5fa;
+
+    font-size: 17px;
+    font-weight: 700;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+.incoming-subtitle {
+    margin-top: 5px;
 
     color: #8992a2;
 
-    font-size: 14px;
+    font-size: 13px;
 }
 
-.incoming-call-buttons {
+
+/* =========================================================
+   INCOMING ACTIONS
+========================================================= */
+
+.incoming-actions {
     display: flex;
 
     gap: 10px;
+
+    margin-top: 25px;
 }
 
-.incoming-call-buttons button {
+.incoming-actions button {
     flex: 1;
 
     height: 48px;
@@ -648,9 +1111,13 @@ button {
 
     font-size: 14px;
     font-weight: 700;
+
+    transition:
+        background 0.2s ease,
+        transform 0.1s ease;
 }
 
-.accept-call-button {
+.accept-button {
     border: none;
 
     background: #16a34a;
@@ -658,11 +1125,15 @@ button {
     color: #ffffff;
 }
 
-.accept-call-button:hover {
+.accept-button:hover {
     background: #15803d;
 }
 
-.decline-call-button {
+.accept-button:active {
+    transform: scale(0.97);
+}
+
+.decline-button {
     border: 1px solid #3a414e;
 
     background: #1a1e27;
@@ -670,39 +1141,24 @@ button {
     color: #ffffff;
 }
 
-.decline-call-button:hover {
+.decline-button:hover {
     background: #242934;
 }
 
-
-/* =========================
-   CALLING SCREEN
-========================= */
-
-.calling-overlay {
-    position: fixed;
-
-    inset: 0;
-
-    z-index: 9998;
-
-    display: flex;
-
-    align-items: center;
-    justify-content: center;
-
-    padding: 20px;
-
-    background: rgba(0, 0, 0, 0.82);
-
-    backdrop-filter: blur(6px);
+.decline-button:active {
+    transform: scale(0.97);
 }
+
+
+/* =========================================================
+   CALLING OVERLAY
+========================================================= */
 
 .calling-card {
     width: 100%;
     max-width: 340px;
 
-    padding: 28px 22px;
+    padding: 30px 22px;
 
     border: 1px solid #2b313e;
 
@@ -714,25 +1170,98 @@ button {
 
     box-shadow:
         0 25px 80px rgba(0, 0, 0, 0.65);
+
+    animation:
+        callCardIn 0.25s ease-out;
 }
 
-.calling-card h3 {
-    margin: 0 0 8px;
+
+/* =========================================================
+   CALLING ICON
+========================================================= */
+
+.calling-icon {
+    width: 68px;
+    height: 68px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin: 0 auto 17px;
+
+    border: 1px solid #1e40af;
+
+    border-radius: 50%;
+
+    background: #172554;
+
+    font-size: 29px;
+
+    animation:
+        callingPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes callingPulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.08);
+    }
+
+}
+
+
+/* =========================================================
+   CALLING TEXT
+========================================================= */
+
+.calling-title {
+    margin-bottom: 7px;
 
     font-size: 21px;
+    font-weight: 700;
 }
 
-.calling-card p {
-    margin: 0 0 22px;
+.calling-name {
+    max-width: 280px;
+
+    margin: 0 auto;
+
+    overflow: hidden;
+
+    color: #60a5fa;
+
+    font-size: 17px;
+    font-weight: 700;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+.calling-subtitle {
+    margin-top: 6px;
 
     color: #8992a2;
 
-    font-size: 14px;
+    font-size: 13px;
 }
 
-.cancel-call-button {
+
+/* =========================================================
+   CANCEL BUTTON
+========================================================= */
+
+.cancel-button {
     width: 100%;
     height: 46px;
+
+    margin-top: 25px;
 
     border: 1px solid #3a414e;
 
@@ -744,16 +1273,24 @@ button {
 
     font-size: 14px;
     font-weight: 700;
+
+    transition:
+        background 0.2s ease,
+        transform 0.1s ease;
 }
 
-.cancel-call-button:hover {
+.cancel-button:hover {
     background: #242934;
 }
 
+.cancel-button:active {
+    transform: scale(0.97);
+}
 
-/* =========================
-   LOADING / STATUS
-========================= */
+
+/* =========================================================
+   CALL STATUS
+========================================================= */
 
 .call-status {
     margin-top: 10px;
@@ -776,9 +1313,18 @@ button {
 }
 
 
-/* =========================
+/* =========================================================
+   HIDDEN
+========================================================= */
+
+.hidden {
+    display: none !important;
+}
+
+
+/* =========================================================
    SMALL DEVICES
-========================= */
+========================================================= */
 
 @media (max-width: 600px) {
 
@@ -829,8 +1375,24 @@ button {
         margin-bottom: 20px;
     }
 
-    .copy-id-button {
-        width: 74px;
+    .online-users {
+        max-height: 300px;
+    }
+
+    .online-user {
+        min-height: 60px;
+
+        padding: 8px;
+    }
+
+    .online-user-avatar {
+        width: 40px;
+        height: 40px;
+    }
+
+    .online-user-call {
+        min-width: 64px;
+        height: 36px;
 
         font-size: 11px;
     }
@@ -855,12 +1417,13 @@ button {
 
         font-size: 11px;
     }
+
 }
 
 
-/* =========================
+/* =========================================================
    VERY SMALL PHONES
-========================= */
+========================================================= */
 
 @media (max-width: 380px) {
 
@@ -881,17 +1444,31 @@ button {
         font-size: 12px;
     }
 
-    .user-id-row {
-        gap: 6px;
+    .online-user {
+        gap: 8px;
     }
 
-    .copy-id-button {
-        width: 68px;
+    .online-user-avatar {
+        width: 37px;
+        height: 37px;
+
+        font-size: 14px;
+    }
+
+    .online-user-name {
+        font-size: 13px;
+    }
+
+    .online-user-call {
+        min-width: 58px;
+
+        padding: 0 7px;
 
         font-size: 10px;
     }
 
-    .incoming-call-buttons {
+    .incoming-actions {
         flex-direction: column;
     }
+
 }
