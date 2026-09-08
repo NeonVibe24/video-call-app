@@ -10,6 +10,18 @@ const KID =
 
 
 /* ============================================================
+   CONSTANTS
+============================================================ */
+
+const GLOBAL_SIGNAL_ID =
+    "GLOBAL_CALL_SIGNAL";
+
+
+const PRESENCE_TIMEOUT =
+    30 * 1000;
+
+
+/* ============================================================
    CORS
 ============================================================ */
 
@@ -48,7 +60,8 @@ function json(
         JSON.stringify(data),
 
         {
-            status: status,
+            status:
+                status,
 
             headers:
                 corsHeaders()
@@ -644,7 +657,7 @@ async function callSignal(
 
     const id =
         env.CALL_SIGNAL.idFromName(
-            "GLOBAL_CALL_SIGNAL"
+            GLOBAL_SIGNAL_ID
         );
 
 
@@ -661,7 +674,8 @@ async function callSignal(
 
 
     url.pathname =
-        "/signal/" + action;
+        "/signal/" +
+        action;
 
 
     return stub.fetch(
@@ -761,7 +775,7 @@ export default {
             return json({
 
                 worker:
-                    "new-version",
+                    "presence-version",
 
                 secretConfigured:
                     !!secret,
@@ -1005,6 +1019,108 @@ export default {
 
 
         /* ======================================================
+           PRESENCE ONLINE
+        ====================================================== */
+
+        if (
+            url.pathname ===
+            "/api/presence/online"
+        ) {
+
+            if (
+                request.method !==
+                "POST"
+            ) {
+
+                return json(
+                    {
+                        error:
+                            "Method not allowed."
+                    },
+                    405
+                );
+
+            }
+
+
+            return callSignal(
+                request,
+                env,
+                "presence-online"
+            );
+
+        }
+
+
+        /* ======================================================
+           PRESENCE POLL
+        ====================================================== */
+
+        if (
+            url.pathname ===
+            "/api/presence/poll"
+        ) {
+
+            if (
+                request.method !==
+                "POST"
+            ) {
+
+                return json(
+                    {
+                        error:
+                            "Method not allowed."
+                    },
+                    405
+                );
+
+            }
+
+
+            return callSignal(
+                request,
+                env,
+                "presence-poll"
+            );
+
+        }
+
+
+        /* ======================================================
+           PRESENCE OFFLINE
+        ====================================================== */
+
+        if (
+            url.pathname ===
+            "/api/presence/offline"
+        ) {
+
+            if (
+                request.method !==
+                "POST"
+            ) {
+
+                return json(
+                    {
+                        error:
+                            "Method not allowed."
+                    },
+                    405
+                );
+
+            }
+
+
+            return callSignal(
+                request,
+                env,
+                "presence-offline"
+            );
+
+        }
+
+
+        /* ======================================================
            JWT TOKEN
         ====================================================== */
 
@@ -1227,7 +1343,7 @@ export class CallSignal {
 
 
     /* ========================================================
-       CLEAN OLD CALLS
+       CLEAN OLD DATA
     ======================================================== */
 
     async cleanup() {
@@ -1236,7 +1352,11 @@ export class CallSignal {
             Date.now();
 
 
-        const entries =
+        /* ======================================================
+           CLEAN CALLS
+        ====================================================== */
+
+        const callEntries =
             await this.state.storage.list({
 
                 prefix:
@@ -1247,7 +1367,7 @@ export class CallSignal {
 
         for (
             const [key, call]
-            of entries
+            of callEntries
         ) {
 
             if (
@@ -1256,6 +1376,41 @@ export class CallSignal {
                 now -
                     call.createdAt >
                     (5 * 60 * 1000)
+            ) {
+
+                await this.state.storage.delete(
+                    key
+                );
+
+            }
+
+        }
+
+
+        /* ======================================================
+           CLEAN PRESENCE
+        ====================================================== */
+
+        const presenceEntries =
+            await this.state.storage.list({
+
+                prefix:
+                    "presence:"
+
+            });
+
+
+        for (
+            const [key, user]
+            of presenceEntries
+        ) {
+
+            if (
+                !user ||
+                !user.lastSeenAt ||
+                now -
+                    user.lastSeenAt >
+                    PRESENCE_TIMEOUT
             ) {
 
                 await this.state.storage.delete(
@@ -1323,6 +1478,1222 @@ export class CallSignal {
 
 
     /* ========================================================
+       GET ACTIVE CALL
+    ======================================================== */
+
+    async getActiveCallForUser(
+        userId
+    ) {
+
+        const entries =
+            await this.state.storage.list({
+
+                prefix:
+                    "call:"
+
+            });
+
+
+        for (
+            const [, call]
+            of entries
+        ) {
+
+            if (
+                !call
+            ) {
+
+                continue;
+
+            }
+
+
+            const active =
+                call.status ===
+                    "ringing"
+
+                ||
+
+                call.status ===
+                    "accepted";
+
+
+            if (
+                active &&
+
+                (
+                    call.callerId ===
+                        userId
+
+                    ||
+
+                    call.receiverId ===
+                        userId
+                )
+            ) {
+
+                return call;
+
+            }
+
+        }
+
+
+        return null;
+
+    }
+
+
+    /* ========================================================
+       CREATE CALL
+    ======================================================== */
+
+    async createCall(
+        request
+    ) {
+
+        const body =
+            await this.readBody(
+                request
+            );
+
+
+        if (!body) {
+
+            return json(
+                {
+                    error:
+                        "Invalid JSON."
+                },
+                400
+            );
+
+        }
+
+
+        const callerId =
+            String(
+                body.callerId ||
+                ""
+            )
+                .trim();
+
+
+        const callerName =
+            String(
+                body.callerName ||
+                ""
+            )
+                .trim()
+                .slice(
+                    0,
+                    40
+                );
+
+
+        const receiverId =
+            String(
+                body.receiverId ||
+                ""
+            )
+                .trim();
+
+
+        const receiverName =
+            String(
+                body.receiverName ||
+                ""
+            )
+                .trim()
+                .slice(
+                    0,
+                    40
+                );
+
+
+        const room =
+            String(
+                body.room ||
+                ""
+            )
+                .trim()
+                .replace(
+                    /[^a-zA-Z0-9_-]/g,
+                    ""
+                )
+                .slice(
+                    0,
+                    40
+                );
+
+
+        if (
+            !this.validId(
+                callerId
+            )
+        ) {
+
+            return json(
+                {
+                    error:
+                        "Invalid callerId."
+                },
+                400
+            );
+
+        }
+
+
+        if (!callerName) {
+
+            return json(
+                {
+                    error:
+                        "Caller name is required."
+                },
+                400
+            );
+
+        }
+
+
+        if (
+            !this.validId(
+                receiverId
+            )
+        ) {
+
+            return json(
+                {
+                    error:
+                        "Invalid receiverId."
+                },
+                400
+            );
+
+        }
+
+
+        if (!room) {
+
+            return json(
+                {
+                    error:
+                        "Room is required."
+                },
+                400
+            );
+
+        }
+
+
+        if (
+            callerId ===
+            receiverId
+        ) {
+
+            return json(
+                {
+                    error:
+                        "You cannot call yourself."
+                },
+                400
+            );
+
+        }
+
+
+        /* ==================================================
+           VERIFY RECEIVER IS ONLINE
+        ================================================== */
+
+        const receiverPresence =
+            await this.state.storage.get(
+                "presence:" +
+                receiverId
+            );
+
+
+        if (
+            !receiverPresence ||
+
+            !receiverPresence.lastSeenAt ||
+
+            Date.now() -
+                receiverPresence.lastSeenAt >
+                PRESENCE_TIMEOUT
+        ) {
+
+            return json(
+                {
+                    error:
+                        "This user is offline."
+                },
+                409
+            );
+
+        }
+
+
+        /* ==================================================
+           PREVENT MULTIPLE ACTIVE CALLS
+        ================================================== */
+
+        const callerActiveCall =
+            await this.getActiveCallForUser(
+                callerId
+            );
+
+
+        if (
+            callerActiveCall
+        ) {
+
+            return json(
+                {
+                    error:
+                        "You are already in another call.",
+                    call:
+                        callerActiveCall
+                },
+                409
+            );
+
+        }
+
+
+        const receiverActiveCall =
+            await this.getActiveCallForUser(
+                receiverId
+            );
+
+
+        if (
+            receiverActiveCall
+        ) {
+
+            return json(
+                {
+                    error:
+                        "This user is already in another call.",
+                    call:
+                        receiverActiveCall
+                },
+                409
+            );
+
+        }
+
+
+        /* ==================================================
+           CREATE CALL
+        ================================================== */
+
+        const callId =
+            crypto.randomUUID();
+
+
+        const now =
+            Date.now();
+
+
+        const call = {
+
+            callId:
+                callId,
+
+            callerId:
+                callerId,
+
+            callerName:
+                callerName,
+
+            receiverId:
+                receiverId,
+
+            receiverName:
+                receiverName ||
+                receiverPresence.name ||
+                "User",
+
+            room:
+                room,
+
+            status:
+                "ringing",
+
+            createdAt:
+                now,
+
+            updatedAt:
+                now
+
+        };
+
+
+        await this.state.storage.put(
+
+            "call:" +
+            callId,
+
+            call
+
+        );
+
+
+        return json({
+
+            ok:
+                true,
+
+            call:
+                call
+
+        });
+
+    }
+
+
+    /* ========================================================
+       POLL INCOMING CALLS
+    ======================================================== */
+
+    async pollIncomingCalls(
+        request
+    ) {
+
+        const body =
+            await this.readBody(
+                request
+            );
+
+
+        if (!body) {
+
+            return json(
+                {
+                    error:
+                        "Invalid JSON."
+                },
+                400
+            );
+
+        }
+
+
+        const userId =
+            String(
+                body.userId ||
+                ""
+            )
+                .trim();
+
+
+        if (
+            !this.validId(
+                userId
+            )
+        ) {
+
+            return json(
+                {
+                    error:
+                        "Invalid userId."
+                },
+                400
+            );
+
+        }
+
+
+        const entries =
+            await this.state.storage.list({
+
+                prefix:
+                    "call:"
+
+            });
+
+
+        const calls = [];
+
+
+        for (
+            const [, call]
+            of entries
+        ) {
+
+            if (
+                call &&
+
+                call.receiverId ===
+                    userId &&
+
+                call.status ===
+                    "ringing"
+            ) {
+
+                calls.push(
+                    call
+                );
+
+            }
+
+        }
+
+
+        calls.sort(
+            (
+                a,
+                b
+            ) =>
+                a.createdAt -
+                b.createdAt
+        );
+
+
+        return json({
+
+            ok:
+                true,
+
+            calls:
+                calls
+
+        });
+
+    }
+
+
+    /* ========================================================
+       PRESENCE ONLINE
+    ======================================================== */
+
+    async presenceOnline(
+        request
+    ) {
+
+        const body =
+            await this.readBody(
+                request
+            );
+
+
+        if (!body) {
+
+            return json(
+                {
+                    error:
+                        "Invalid JSON."
+                },
+                400
+            );
+
+        }
+
+
+        const userId =
+            String(
+                body.userId ||
+                ""
+            )
+                .trim();
+
+
+        const name =
+            String(
+                body.name ||
+                ""
+            )
+                .trim()
+                .slice(
+                    0,
+                    40
+                );
+
+
+        if (
+            !this.validId(
+                userId
+            )
+        ) {
+
+            return json(
+                {
+                    error:
+                        "Invalid userId."
+                },
+                400
+            );
+
+        }
+
+
+        if (!name) {
+
+            return json(
+                {
+                    error:
+                        "Name is required."
+                },
+                400
+            );
+
+        }
+
+
+        const existing =
+            await this.state.storage.get(
+                "presence:" +
+                userId
+            );
+
+
+        const now =
+            Date.now();
+
+
+        const user = {
+
+            userId:
+                userId,
+
+            name:
+                name,
+
+            lastSeenAt:
+                now
+
+        };
+
+
+        await this.state.storage.put(
+
+            "presence:" +
+            userId,
+
+            user
+
+        );
+
+
+        return json({
+
+            ok:
+                true,
+
+            user:
+                user
+
+        });
+
+    }
+
+
+    /* ========================================================
+       PRESENCE POLL
+    ======================================================== */
+
+    async presencePoll(
+        request
+    ) {
+
+        const body =
+            await this.readBody(
+                request
+            );
+
+
+        if (!body) {
+
+            return json(
+                {
+                    error:
+                        "Invalid JSON."
+                },
+                400
+            );
+
+        }
+
+
+        const currentUserId =
+            String(
+                body.userId ||
+                ""
+            )
+                .trim();
+
+
+        if (
+            !this.validId(
+                currentUserId
+            )
+        ) {
+
+            return json(
+                {
+                    error:
+                        "Invalid userId."
+                },
+                400
+            );
+
+        }
+
+
+        const now =
+            Date.now();
+
+
+        const presenceEntries =
+            await this.state.storage.list({
+
+                prefix:
+                    "presence:"
+
+            });
+
+
+        const users = [];
+
+
+        for (
+            const [, user]
+            of presenceEntries
+        ) {
+
+            if (
+                !user
+            ) {
+
+                continue;
+
+            }
+
+
+            if (
+                user.userId ===
+                currentUserId
+            ) {
+
+                continue;
+
+            }
+
+
+            if (
+                !user.lastSeenAt
+            ) {
+
+                continue;
+
+            }
+
+
+            if (
+                now -
+                    user.lastSeenAt >
+                    PRESENCE_TIMEOUT
+            ) {
+
+                continue;
+
+            }
+
+
+            const activeCall =
+                await this.getActiveCallForUser(
+                    user.userId
+                );
+
+
+            users.push({
+
+                userId:
+                    user.userId,
+
+                name:
+                    user.name ||
+                    "User",
+
+                status:
+                    activeCall
+                        ? "busy"
+                        : "online"
+
+            });
+
+        }
+
+
+        users.sort(
+            (
+                a,
+                b
+            ) => {
+
+                if (
+                    a.status ===
+                    b.status
+                ) {
+
+                    return a.name.localeCompare(
+                        b.name
+                    );
+
+                }
+
+
+                if (
+                    a.status ===
+                    "online"
+                ) {
+
+                    return -1;
+
+                }
+
+
+                return 1;
+
+            }
+        );
+
+
+        return json({
+
+            ok:
+                true,
+
+            users:
+                users
+
+        });
+
+    }
+
+
+    /* ========================================================
+       PRESENCE OFFLINE
+    ======================================================== */
+
+    async presenceOffline(
+        request
+    ) {
+
+        const body =
+            await this.readBody(
+                request
+            );
+
+
+        if (!body) {
+
+            return json(
+                {
+                    error:
+                        "Invalid JSON."
+                },
+                400
+            );
+
+        }
+
+
+        const userId =
+            String(
+                body.userId ||
+                ""
+            )
+                .trim();
+
+
+        if (
+            !this.validId(
+                userId
+            )
+        ) {
+
+            return json(
+                {
+                    error:
+                        "Invalid userId."
+                },
+                400
+            );
+
+        }
+
+
+        await this.state.storage.delete(
+
+            "presence:" +
+            userId
+
+        );
+
+
+        return json({
+
+            ok:
+                true
+
+        });
+
+    }
+
+
+    /* ========================================================
+       CALL ACTIONS
+    ======================================================== */
+
+    async callAction(
+        request,
+        action
+    ) {
+
+        const body =
+            await this.readBody(
+                request
+            );
+
+
+        if (!body) {
+
+            return json(
+                {
+                    error:
+                        "Invalid JSON."
+                },
+                400
+            );
+
+        }
+
+
+        const callId =
+            String(
+                body.callId ||
+                ""
+            )
+                .trim();
+
+
+        const userId =
+            String(
+                body.userId ||
+                ""
+            )
+                .trim();
+
+
+        if (
+            !this.validId(
+                callId.replace(
+                    /-/g,
+                    ""
+                )
+            )
+        ) {
+
+            return json(
+                {
+                    error:
+                        "Invalid callId."
+                },
+                400
+            );
+
+        }
+
+
+        if (
+            !this.validId(
+                userId
+            )
+        ) {
+
+            return json(
+                {
+                    error:
+                        "Invalid userId."
+                },
+                400
+            );
+
+        }
+
+
+        const key =
+            "call:" +
+            callId;
+
+
+        const call =
+            await this.state.storage.get(
+                key
+            );
+
+
+        if (!call) {
+
+            return json(
+                {
+                    error:
+                        "Call not found."
+                },
+                404
+            );
+
+        }
+
+
+        /* ==================================================
+           STATUS
+        ================================================== */
+
+        if (
+            action ===
+            "status"
+        ) {
+
+            if (
+
+                userId !==
+                    call.callerId
+
+                &&
+
+                userId !==
+                    call.receiverId
+
+            ) {
+
+                return json(
+                    {
+                        error:
+                            "Not authorized."
+                    },
+                    403
+                );
+
+            }
+
+
+            return json({
+
+                ok:
+                    true,
+
+                call:
+                    call
+
+            });
+
+        }
+
+
+        /* ==================================================
+           ACCEPT
+        ================================================== */
+
+        if (
+            action ===
+            "accept"
+        ) {
+
+            if (
+                userId !==
+                call.receiverId
+            ) {
+
+                return json(
+                    {
+                        error:
+                            "Only receiver can accept."
+                    },
+                    403
+                );
+
+            }
+
+
+            if (
+                call.status !==
+                "ringing"
+            ) {
+
+                return json({
+
+                    ok:
+                        true,
+
+                    call:
+                        call
+
+                });
+
+            }
+
+
+            call.status =
+                "accepted";
+
+
+            call.updatedAt =
+                Date.now();
+
+
+            await this.state.storage.put(
+                key,
+                call
+            );
+
+
+            return json({
+
+                ok:
+                    true,
+
+                call:
+                    call
+
+            });
+
+        }
+
+
+        /* ==================================================
+           DECLINE
+        ================================================== */
+
+        if (
+            action ===
+            "decline"
+        ) {
+
+            if (
+                userId !==
+                call.receiverId
+            ) {
+
+                return json(
+                    {
+                        error:
+                            "Only receiver can decline."
+                    },
+                    403
+                );
+
+            }
+
+
+            if (
+                call.status ===
+                "ringing"
+            ) {
+
+                call.status =
+                    "declined";
+
+
+                call.updatedAt =
+                    Date.now();
+
+
+                await this.state.storage.put(
+                    key,
+                    call
+                );
+
+            }
+
+
+            return json({
+
+                ok:
+                    true,
+
+                call:
+                    call
+
+            });
+
+        }
+
+
+        /* ==================================================
+           CANCEL
+        ================================================== */
+
+        if (
+            action ===
+            "cancel"
+        ) {
+
+            if (
+                userId !==
+                call.callerId
+            ) {
+
+                return json(
+                    {
+                        error:
+                            "Only caller can cancel."
+                    },
+                    403
+                );
+
+            }
+
+
+            if (
+                call.status ===
+                "ringing"
+            ) {
+
+                call.status =
+                    "cancelled";
+
+
+                call.updatedAt =
+                    Date.now();
+
+
+                await this.state.storage.put(
+                    key,
+                    call
+                );
+
+            }
+
+
+            return json({
+
+                ok:
+                    true,
+
+                call:
+                    call
+
+            });
+
+        }
+
+
+        return json(
+            {
+                error:
+                    "Unknown call action."
+            },
+            404
+        );
+
+    }
+
+
+    /* ========================================================
        FETCH
     ======================================================== */
 
@@ -1356,278 +2727,9 @@ export class CallSignal {
             "create"
         ) {
 
-            const body =
-                await this.readBody(
-                    request
-                );
-
-
-            if (!body) {
-
-                return json(
-                    {
-                        error:
-                            "Invalid JSON."
-                    },
-                    400
-                );
-
-            }
-
-
-            const callerId =
-                String(
-                    body.callerId ||
-                    ""
-                )
-                    .trim();
-
-
-            const callerName =
-                String(
-                    body.callerName ||
-                    ""
-                )
-                    .trim()
-                    .slice(
-                        0,
-                        40
-                    );
-
-
-            const receiverId =
-                String(
-                    body.receiverId ||
-                    ""
-                )
-                    .trim();
-
-
-            const receiverName =
-                String(
-                    body.receiverName ||
-                    ""
-                )
-                    .trim()
-                    .slice(
-                        0,
-                        40
-                    );
-
-
-            const room =
-                String(
-                    body.room ||
-                    ""
-                )
-                    .trim()
-                    .replace(
-                        /[^a-zA-Z0-9_-]/g,
-                        ""
-                    )
-                    .slice(
-                        0,
-                        40
-                    );
-
-
-            if (
-                !this.validId(
-                    callerId
-                )
-            ) {
-
-                return json(
-                    {
-                        error:
-                            "Invalid callerId."
-                    },
-                    400
-                );
-
-            }
-
-
-            if (!callerName) {
-
-                return json(
-                    {
-                        error:
-                            "Caller name is required."
-                    },
-                    400
-                );
-
-            }
-
-
-            if (
-                !this.validId(
-                    receiverId
-                )
-            ) {
-
-                return json(
-                    {
-                        error:
-                            "Invalid receiverId."
-                    },
-                    400
-                );
-
-            }
-
-
-            if (!room) {
-
-                return json(
-                    {
-                        error:
-                            "Room is required."
-                    },
-                    400
-                );
-
-            }
-
-
-            if (
-                callerId ===
-                receiverId
-            ) {
-
-                return json(
-                    {
-                        error:
-                            "You cannot call yourself."
-                    },
-                    400
-                );
-
-            }
-
-
-            /* ==================================================
-               PREVENT MULTIPLE ACTIVE CALLS
-            ================================================== */
-
-            const existingEntries =
-                await this.state.storage.list({
-                    prefix:
-                        "call:"
-                });
-
-
-            for (
-                const [, existingCall]
-                of existingEntries
-            ) {
-
-                if (
-                    !existingCall
-                ) {
-
-                    continue;
-
-                }
-
-
-                const active =
-                    existingCall.status ===
-                        "ringing" ||
-
-                    existingCall.status ===
-                        "accepted";
-
-
-                if (
-                    active &&
-
-                    (
-                        existingCall.callerId ===
-                            callerId ||
-
-                        existingCall.receiverId ===
-                            callerId ||
-
-                        existingCall.callerId ===
-                            receiverId ||
-
-                        existingCall.receiverId ===
-                            receiverId
-                    )
-                ) {
-
-                    return json(
-                        {
-                            error:
-                                "One of the users is already in another call.",
-                            call:
-                                existingCall
-                        },
-                        409
-                    );
-
-                }
-
-            }
-
-
-            const callId =
-                crypto.randomUUID();
-
-
-            const call = {
-
-                callId:
-                    callId,
-
-                callerId:
-                    callerId,
-
-                callerName:
-                    callerName,
-
-                receiverId:
-                    receiverId,
-
-                receiverName:
-                    receiverName,
-
-                room:
-                    room,
-
-                status:
-                    "ringing",
-
-                createdAt:
-                    Date.now(),
-
-                updatedAt:
-                    Date.now()
-
-            };
-
-
-            await this.state.storage.put(
-
-                "call:" +
-                callId,
-
-                call
-
+            return this.createCall(
+                request
             );
-
-
-            return json({
-
-                ok:
-                    true,
-
-                call:
-                    call
-
-            });
 
         }
 
@@ -1641,109 +2743,63 @@ export class CallSignal {
             "poll"
         ) {
 
-            const body =
-                await this.readBody(
-                    request
-                );
-
-
-            if (!body) {
-
-                return json(
-                    {
-                        error:
-                            "Invalid JSON."
-                    },
-                    400
-                );
-
-            }
-
-
-            const userId =
-                String(
-                    body.userId ||
-                    ""
-                )
-                    .trim();
-
-
-            if (
-                !this.validId(
-                    userId
-                )
-            ) {
-
-                return json(
-                    {
-                        error:
-                            "Invalid userId."
-                    },
-                    400
-                );
-
-            }
-
-
-            const entries =
-                await this.state.storage.list({
-                    prefix:
-                        "call:"
-                });
-
-
-            const calls = [];
-
-
-            for (
-                const [, call]
-                of entries
-            ) {
-
-                if (
-                    call &&
-
-                    call.receiverId ===
-                        userId &&
-
-                    call.status ===
-                        "ringing"
-                ) {
-
-                    calls.push(
-                        call
-                    );
-
-                }
-
-            }
-
-
-            calls.sort(
-                (
-                    a,
-                    b
-                ) =>
-                    a.createdAt -
-                    b.createdAt
+            return this.pollIncomingCalls(
+                request
             );
-
-
-            return json({
-
-                ok:
-                    true,
-
-                calls:
-                    calls
-
-            });
 
         }
 
 
         /* ======================================================
-           CALL ACTIONS
+           PRESENCE ONLINE
+        ====================================================== */
+
+        if (
+            action ===
+            "presence-online"
+        ) {
+
+            return this.presenceOnline(
+                request
+            );
+
+        }
+
+
+        /* ======================================================
+           PRESENCE POLL
+        ====================================================== */
+
+        if (
+            action ===
+            "presence-poll"
+        ) {
+
+            return this.presencePoll(
+                request
+            );
+
+        }
+
+
+        /* ======================================================
+           PRESENCE OFFLINE
+        ====================================================== */
+
+        if (
+            action ===
+            "presence-offline"
+        ) {
+
+            return this.presenceOffline(
+                request
+            );
+
+        }
+
+
+        /* ======================================================
+           ACCEPT / DECLINE / CANCEL / STATUS
         ====================================================== */
 
         if (
@@ -1768,333 +2824,10 @@ export class CallSignal {
 
         ) {
 
-            const body =
-                await this.readBody(
-                    request
-                );
-
-
-            if (!body) {
-
-                return json(
-                    {
-                        error:
-                            "Invalid JSON."
-                    },
-                    400
-                );
-
-            }
-
-
-            const callId =
-                String(
-                    body.callId ||
-                    ""
-                )
-                    .trim();
-
-
-            const userId =
-                String(
-                    body.userId ||
-                    ""
-                )
-                    .trim();
-
-
-            if (
-                !this.validId(
-                    callId.replace(
-                        /-/g,
-                        ""
-                    )
-                )
-            ) {
-
-                return json(
-                    {
-                        error:
-                            "Invalid callId."
-                    },
-                    400
-                );
-
-            }
-
-
-            if (
-                !this.validId(
-                    userId
-                )
-            ) {
-
-                return json(
-                    {
-                        error:
-                            "Invalid userId."
-                    },
-                    400
-                );
-
-            }
-
-
-            const key =
-                "call:" +
-                callId;
-
-
-            const call =
-                await this.state.storage.get(
-                    key
-                );
-
-
-            if (!call) {
-
-                return json(
-                    {
-                        error:
-                            "Call not found."
-                    },
-                    404
-                );
-
-            }
-
-
-            /* ==================================================
-               STATUS
-            ================================================== */
-
-            if (
-                action ===
-                "status"
-            ) {
-
-                if (
-
-                    userId !==
-                        call.callerId
-
-                    &&
-
-                    userId !==
-                        call.receiverId
-
-                ) {
-
-                    return json(
-                        {
-                            error:
-                                "Not authorized."
-                        },
-                        403
-                    );
-
-                }
-
-
-                return json({
-
-                    ok:
-                        true,
-
-                    call:
-                        call
-
-                });
-
-            }
-
-
-            /* ==================================================
-               ACCEPT
-            ================================================== */
-
-            if (
-                action ===
-                "accept"
-            ) {
-
-                if (
-                    userId !==
-                    call.receiverId
-                ) {
-
-                    return json(
-                        {
-                            error:
-                                "Only receiver can accept."
-                        },
-                        403
-                    );
-
-                }
-
-
-                if (
-                    call.status !==
-                    "ringing"
-                ) {
-
-                    return json({
-
-                        ok:
-                            true,
-
-                        call:
-                            call
-
-                    });
-
-                }
-
-
-                call.status =
-                    "accepted";
-
-
-                call.updatedAt =
-                    Date.now();
-
-
-                await this.state.storage.put(
-                    key,
-                    call
-                );
-
-
-                return json({
-
-                    ok:
-                        true,
-
-                    call:
-                        call
-
-                });
-
-            }
-
-
-            /* ==================================================
-               DECLINE
-            ================================================== */
-
-            if (
-                action ===
-                "decline"
-            ) {
-
-                if (
-                    userId !==
-                    call.receiverId
-                ) {
-
-                    return json(
-                        {
-                            error:
-                                "Only receiver can decline."
-                        },
-                        403
-                    );
-
-                }
-
-
-                if (
-                    call.status ===
-                    "ringing"
-                ) {
-
-                    call.status =
-                        "declined";
-
-
-                    call.updatedAt =
-                        Date.now();
-
-
-                    await this.state.storage.put(
-                        key,
-                        call
-                    );
-
-                }
-
-
-                return json({
-
-                    ok:
-                        true,
-
-                    call:
-                        call
-
-                });
-
-            }
-
-
-            /* ==================================================
-               CANCEL
-            ================================================== */
-
-            if (
-                action ===
-                "cancel"
-            ) {
-
-                if (
-                    userId !==
-                    call.callerId
-                ) {
-
-                    return json(
-                        {
-                            error:
-                                "Only caller can cancel."
-                        },
-                        403
-                    );
-
-                }
-
-
-                if (
-                    call.status ===
-                    "ringing"
-                ) {
-
-                    call.status =
-                        "cancelled";
-
-
-                    call.updatedAt =
-                        Date.now();
-
-
-                    await this.state.storage.put(
-                        key,
-                        call
-                    );
-
-                }
-
-
-                return json({
-
-                    ok:
-                        true,
-
-                    call:
-                        call
-
-                });
-
-            }
+            return this.callAction(
+                request,
+                action
+            );
 
         }
 
