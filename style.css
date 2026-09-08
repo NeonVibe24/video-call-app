@@ -1,0 +1,75 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  }
+
+body {
+min-height: 100vh;
+background: #0f1117;
+color: #ffffff;
+font-family: Arial, sans-serif;
+}
+
+.app {
+min-height: 100vh;
+}
+
+.topbar {
+height: 64px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 0 20px;
+background: #171a22;
+border-bottom: 1px solid #272b36;
+}
+
+.logo {
+font-size: 20px;
+font-weight: 700;
+}
+
+.status {
+font-size: 14px;
+color: #8f96a3;
+}
+
+.main {
+min-height: calc(100vh - 64px);
+display: flex;
+align-items: center;
+justify-content: center;
+padding: 20px;
+}
+
+.welcome {
+width: 100%;
+max-width: 420px;
+text-align: center;
+}
+
+.welcome h1 {
+font-size: 36px;
+margin-bottom: 12px;
+}
+
+.welcome p {
+color: #9da4b2;
+margin-bottom: 28px;
+}
+
+#startCallBtn {
+border: none;
+border-radius: 12px;
+padding: 15px 28px;
+background: #2563eb;
+color: #ffffff;
+font-size: 16px;
+font-weight: 600;
+cursor: pointer;
+}
+
+#startCallBtn:active {
+transform: scale(0.98);
+}
