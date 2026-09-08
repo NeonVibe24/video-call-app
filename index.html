@@ -56,7 +56,9 @@
 
             <span></span>
 
-            Ready
+            <span id="connectionStatus">
+                Online
+            </span>
 
         </div>
 
@@ -98,8 +100,8 @@
 
 
                 <p>
-                    Create a private room or enter a room
-                    code to start a video call.
+                    Enter your name and select someone
+                    from the online users list to call.
                 </p>
 
             </div>
@@ -133,89 +135,64 @@
 
 
                 <!-- =========================================
-                     USER ID
+                     ONLINE USERS
                 ========================================== -->
 
-                <label
-                    class="room-label"
-                >
-                    Your User ID
-                </label>
+                <div class="online-users-header">
 
+                    <div>
 
-                <div
-                    style="
-                        display:flex;
-                        gap:8px;
-                        align-items:center;
-                    "
-                >
+                        <strong>
+                            Online Users
+                        </strong>
 
-                    <input
-                        id="myUserIdInput"
-                        type="text"
-                        readonly
-                        style="
-                            flex:1;
-                            opacity:.8;
-                            font-size:12px;
-                        "
-                    >
+                        <span
+                            id="onlineCount"
+                            class="online-count"
+                        >
+                            0
+                        </span>
+
+                    </div>
 
 
                     <button
-                        id="copyUserIdButton"
+                        id="refreshUsersButton"
                         type="button"
-                        class="secondary-button"
-                        style="
-                            width:auto;
-                            white-space:nowrap;
-                            padding:12px 14px;
-                        "
+                        class="refresh-button"
                     >
-                        Copy
+                        ↻
                     </button>
 
                 </div>
 
 
 
-                <!-- =========================================
-                     CALL USER
-                ========================================== -->
-
-                <label
-                    class="room-label"
-                >
-                    Call User
-                </label>
-
-
-                <input
-                    id="receiverIdInput"
-                    type="text"
-                    maxlength="100"
-                    placeholder="Enter receiver User ID"
-                    autocomplete="off"
+                <div
+                    id="onlineUsers"
+                    class="online-users"
                 >
 
+                    <div
+                        id="noUsersMessage"
+                        class="no-users"
+                    >
 
-                <input
-                    id="receiverNameInput"
-                    type="text"
-                    maxlength="40"
-                    placeholder="Receiver name (optional)"
-                    autocomplete="off"
-                >
+                        <div class="no-users-icon">
+                            👥
+                        </div>
 
+                        <div>
+                            No other users online
+                        </div>
 
-                <button
-                    id="callUserButton"
-                    class="primary-button"
-                    type="button"
-                >
-                    📞 Call User
-                </button>
+                        <small>
+                            Online users will appear here.
+                        </small>
+
+                    </div>
+
+                </div>
 
 
 
@@ -262,6 +239,7 @@
                 </button>
 
 
+
                 <div class="divider">
 
                     <span>
@@ -297,13 +275,14 @@
                 <div>
 
                     <strong>
-                        Private 1 vs 1 room
+                        Private 1 vs 1 Call
                     </strong>
 
 
                     <p>
-                        Share your User ID with the person
-                        who wants to call you.
+                        Select an online user to send a
+                        private video call. No User ID is
+                        required.
                     </p>
 
                 </div>
@@ -378,19 +357,135 @@
 
 
 <!-- =========================================================
+     INCOMING CALL OVERLAY
+     
+     app.js will control this.
+========================================================== -->
+
+<div
+    id="incomingCallOverlay"
+    class="call-overlay"
+    style="display:none;"
+>
+
+    <div class="incoming-call-card">
+
+        <div class="incoming-icon">
+            📞
+        </div>
+
+
+        <div class="incoming-title">
+            Incoming Call
+        </div>
+
+
+        <div
+            id="incomingCallerName"
+            class="incoming-name"
+        >
+            Someone
+        </div>
+
+
+        <div class="incoming-subtitle">
+            is calling you
+        </div>
+
+
+        <div class="incoming-actions">
+
+            <button
+                id="declineCallButton"
+                type="button"
+                class="decline-button"
+            >
+                Decline
+            </button>
+
+
+            <button
+                id="acceptCallButton"
+                type="button"
+                class="accept-button"
+            >
+                Accept
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================================================
+     OUTGOING CALL OVERLAY
+     
+     Shown while waiting for receiver.
+========================================================== -->
+
+<div
+    id="callingOverlay"
+    class="call-overlay"
+    style="display:none;"
+>
+
+    <div class="calling-card">
+
+        <div class="calling-icon">
+            📞
+        </div>
+
+
+        <div class="calling-title">
+            Calling...
+        </div>
+
+
+        <div
+            id="callingReceiverName"
+            class="calling-name"
+        >
+            User
+        </div>
+
+
+        <div class="calling-subtitle">
+            Waiting for them to answer
+        </div>
+
+
+        <button
+            id="cancelCallButton"
+            type="button"
+            class="cancel-button"
+        >
+            Cancel
+        </button>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================================================
      APP SCRIPT
 ========================================================== -->
 
 <script src="app.js"></script>
 
 
+
 <!-- =========================================================
-     USER ID UI CONNECTION
+     ONLINE USER UI
      
-     This connects the HTML to:
+     app.js exposes:
      
-     window.getMyUserId()
-     window.callUser()
+     window.callUser(userId, userName)
+     window.refreshOnlineUsers()
 ========================================================== -->
 
 <script>
@@ -401,87 +496,27 @@ document.addEventListener(
 
 
         /* ================================================
-           USER ID
+           REFRESH ONLINE USERS
         ================================================= */
 
-        const myUserIdInput =
+        const refreshUsersButton =
             document.getElementById(
-                "myUserIdInput"
+                "refreshUsersButton"
             );
 
 
-        if (
-            myUserIdInput &&
-            typeof window.getMyUserId ===
-                "function"
-        ) {
+        if (refreshUsersButton) {
 
-            myUserIdInput.value =
-                window.getMyUserId();
-
-        }
-
-
-
-        /* ================================================
-           COPY USER ID
-        ================================================= */
-
-        const copyUserIdButton =
-            document.getElementById(
-                "copyUserIdButton"
-            );
-
-
-        if (copyUserIdButton) {
-
-            copyUserIdButton.addEventListener(
+            refreshUsersButton.addEventListener(
                 "click",
-                async function () {
+                function () {
 
-                    const userId =
-                        myUserIdInput.value;
+                    if (
+                        typeof window.refreshOnlineUsers ===
+                        "function"
+                    ) {
 
-
-                    if (!userId) {
-
-                        return;
-
-                    }
-
-
-                    try {
-
-                        await navigator.clipboard.writeText(
-                            userId
-                        );
-
-
-                        const oldText =
-                            copyUserIdButton.textContent;
-
-
-                        copyUserIdButton.textContent =
-                            "Copied!";
-
-
-                        setTimeout(
-                            function () {
-
-                                copyUserIdButton.textContent =
-                                    oldText;
-
-                            },
-                            1500
-                        );
-
-
-                    } catch (_) {
-
-                        prompt(
-                            "Copy your User ID:",
-                            userId
-                        );
+                        window.refreshOnlineUsers();
 
                     }
 
@@ -493,113 +528,29 @@ document.addEventListener(
 
 
         /* ================================================
-           CALL USER
+           NAME CHANGE
+           
+           app.js will handle presence registration.
         ================================================= */
 
-        const callUserButton =
+        const nameInput =
             document.getElementById(
-                "callUserButton"
+                "nameInput"
             );
 
 
-        const receiverIdInput =
-            document.getElementById(
-                "receiverIdInput"
-            );
+        if (nameInput) {
 
-
-        const receiverNameInput =
-            document.getElementById(
-                "receiverNameInput"
-            );
-
-
-        if (callUserButton) {
-
-            callUserButton.addEventListener(
-                "click",
-                async function () {
-
-                    const receiverId =
-                        receiverIdInput.value.trim();
-
-
-                    const receiverName =
-                        receiverNameInput.value.trim();
-
-
-                    if (!receiverId) {
-
-                        alert(
-                            "Please enter the receiver User ID."
-                        );
-
-
-                        receiverIdInput.focus();
-
-
-                        return;
-
-                    }
-
+            nameInput.addEventListener(
+                "change",
+                function () {
 
                     if (
-                        typeof window.callUser !==
-                            "function"
+                        typeof window.updateMyPresence ===
+                        "function"
                     ) {
 
-                        alert(
-                            "Call system is not ready."
-                        );
-
-
-                        return;
-
-                    }
-
-
-                    callUserButton.disabled =
-                        true;
-
-
-                    try {
-
-                        await window.callUser(
-                            receiverId,
-                            receiverName
-                        );
-
-
-                    } finally {
-
-                        callUserButton.disabled =
-                            false;
-
-                    }
-
-                }
-            );
-
-        }
-
-
-
-        /* ================================================
-           ENTER KEY
-        ================================================= */
-
-        if (receiverIdInput) {
-
-            receiverIdInput.addEventListener(
-                "keydown",
-                function (event) {
-
-                    if (
-                        event.key ===
-                        "Enter"
-                    ) {
-
-                        callUserButton.click();
+                        window.updateMyPresence();
 
                     }
 
