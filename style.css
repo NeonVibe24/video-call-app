@@ -68,7 +68,6 @@ button:disabled {
 .brand {
     display: flex;
     align-items: center;
-
     gap: 11px;
 }
 
@@ -104,11 +103,9 @@ button:disabled {
 .status {
     display: flex;
     align-items: center;
-
     gap: 7px;
 
     color: #858d9c;
-
     font-size: 13px;
 }
 
@@ -160,7 +157,6 @@ button:disabled {
     margin: 0 auto 20px;
 
     border: 1px solid #272e3c;
-
     border-radius: 23px;
 
     background: #111621;
@@ -186,7 +182,6 @@ button:disabled {
     color: #8992a2;
 
     font-size: 14px;
-
     line-height: 1.6;
 }
 
@@ -202,7 +197,6 @@ button:disabled {
     padding: 23px;
 
     border: 1px solid #252b37;
-
     border-radius: 18px;
 
     background: #10131a;
@@ -221,13 +215,9 @@ button:disabled {
     font-size: 13px;
 }
 
-.room-label {
-    margin-top: 17px;
-}
-
 
 /* =========================================================
-   INPUTS
+   NAME INPUT
 ========================================================= */
 
 .card input {
@@ -237,13 +227,11 @@ button:disabled {
     padding: 0 14px;
 
     border: 1px solid #2b313e;
-
     border-radius: 10px;
 
     outline: none;
 
     background: #090c12;
-
     color: #ffffff;
 
     font-size: 15px;
@@ -293,7 +281,6 @@ button:disabled {
 
 .online-users-header strong {
     color: #ffffff;
-
     font-size: 14px;
 }
 
@@ -329,11 +316,9 @@ button:disabled {
     z-index: 10;
 
     border: 1px solid #303744;
-
     border-radius: 9px;
 
     background: #191d25;
-
     color: #ffffff;
 
     font-size: 19px;
@@ -356,7 +341,7 @@ button:disabled {
 
 
 /* =========================================================
-   ONLINE USERS LIST
+   ONLINE USERS
 ========================================================= */
 
 .online-users {
@@ -367,17 +352,12 @@ button:disabled {
 
     gap: 8px;
 
-    max-height: 280px;
+    max-height: 360px;
 
     overflow-y: auto;
 
     padding-right: 2px;
 }
-
-
-/* =========================================================
-   SCROLLBAR
-========================================================= */
 
 .online-users::-webkit-scrollbar {
     width: 5px;
@@ -389,22 +369,16 @@ button:disabled {
 
 .online-users::-webkit-scrollbar-thumb {
     border-radius: 10px;
-
     background: #303744;
-}
-
-.online-users::-webkit-scrollbar-thumb:hover {
-    background: #414958;
 }
 
 
 /* =========================================================
-   ONLINE USER ITEM
+   USER ITEM
 ========================================================= */
 
 .online-user-item {
     width: 100%;
-
     min-height: 62px;
 
     display: flex;
@@ -415,7 +389,6 @@ button:disabled {
     padding: 9px 10px;
 
     border: 1px solid #252c38;
-
     border-radius: 12px;
 
     background: #0c1017;
@@ -430,7 +403,6 @@ button:disabled {
 
 .online-user-item:hover {
     background: #121823;
-
     border-color: #303a4b;
 }
 
@@ -471,10 +443,7 @@ button:disabled {
     align-items: center;
     justify-content: center;
 
-    position: relative;
-
     border: 1px solid #334155;
-
     border-radius: 50%;
 
     background:
@@ -508,13 +477,12 @@ button:disabled {
     font-weight: 700;
 
     text-overflow: ellipsis;
-
     white-space: nowrap;
 }
 
 
 /* =========================================================
-   USER STATUS
+   STATUS
 ========================================================= */
 
 .online-user-status {
@@ -531,11 +499,6 @@ button:disabled {
 .online-user-status.busy {
     color: #f59e0b;
 }
-
-
-/* =========================================================
-   STATUS DOT
-========================================================= */
 
 .online-status-dot {
     display: inline-block;
@@ -578,32 +541,29 @@ button:disabled {
     justify-content: center;
 
     position: relative;
-
     z-index: 20;
 
     border: none;
-
     border-radius: 9px;
 
     background: #16a34a;
-
     color: #ffffff;
 
     font-size: 12px;
     font-weight: 700;
 
     cursor: pointer;
-
     pointer-events: auto;
 
     user-select: none;
 
     -webkit-tap-highlight-color: transparent;
 
+    touch-action: manipulation;
+
     transition:
         background 0.2s ease,
-        transform 0.1s ease,
-        opacity 0.2s ease;
+        transform 0.1s ease;
 }
 
 .online-call-button:hover {
@@ -614,29 +574,7 @@ button:disabled {
     transform: scale(0.94);
 }
 
-.online-call-button:disabled {
-    background: #303744;
-
-    color: #8b94a4;
-
-    cursor: not-allowed;
-
-    pointer-events: none;
-
-    opacity: 0.65;
-}
-
-
-/* =========================================================
-   BUSY USER
-========================================================= */
-
-.online-user-item:has(.online-call-button:disabled) {
-    opacity: 0.7;
-}
-
-.online-user-item:has(.online-call-button:disabled)
-.online-call-button {
+.online-call-button.busy {
     background: #191d25;
 
     border: 1px solid #343b48;
@@ -651,7 +589,6 @@ button:disabled {
 
 .no-users {
     width: 100%;
-
     min-height: 115px;
 
     display: flex;
@@ -662,7 +599,6 @@ button:disabled {
     padding: 18px;
 
     border: 1px dashed #2b313e;
-
     border-radius: 12px;
 
     background: #0c1017;
@@ -670,13 +606,11 @@ button:disabled {
     color: #7f8796;
 
     font-size: 13px;
-
     text-align: center;
 }
 
 .no-users-icon {
     margin-bottom: 7px;
-
     font-size: 24px;
 }
 
@@ -688,171 +622,6 @@ button:disabled {
     color: #555e6d;
 
     font-size: 10px;
-}
-
-
-/* =========================================================
-   USERS LOADING
-========================================================= */
-
-.users-loading {
-    width: 100%;
-
-    min-height: 85px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border: 1px solid #252c38;
-
-    border-radius: 12px;
-
-    background: #0c1017;
-
-    color: #737c8c;
-
-    font-size: 12px;
-}
-
-.users-loading::before {
-    content: "";
-
-    width: 15px;
-    height: 15px;
-
-    margin-right: 9px;
-
-    border: 2px solid #303744;
-
-    border-top-color: #60a5fa;
-
-    border-radius: 50%;
-
-    animation:
-        userLoadingSpin 0.8s linear infinite;
-}
-
-@keyframes userLoadingSpin {
-
-    from {
-        transform: rotate(0deg);
-    }
-
-    to {
-        transform: rotate(360deg);
-    }
-
-}
-
-
-/* =========================================================
-   USERS ERROR
-========================================================= */
-
-.users-error {
-    width: 100%;
-
-    padding: 13px;
-
-    border: 1px solid #3f2529;
-
-    border-radius: 12px;
-
-    background: #171013;
-
-    color: #f87171;
-
-    font-size: 12px;
-
-    line-height: 1.5;
-
-    text-align: center;
-}
-
-
-/* =========================================================
-   NORMAL BUTTONS
-========================================================= */
-
-.primary-button,
-.secondary-button {
-    width: 100%;
-    height: 50px;
-
-    margin-top: 14px;
-
-    border-radius: 10px;
-
-    font-size: 15px;
-    font-weight: 700;
-
-    transition:
-        background 0.2s ease,
-        transform 0.1s ease,
-        opacity 0.2s ease;
-}
-
-.primary-button {
-    border: none;
-
-    background: #2563eb;
-
-    color: #ffffff;
-
-    cursor: pointer;
-}
-
-.primary-button:hover {
-    background: #1d4ed8;
-}
-
-.secondary-button {
-    border: 1px solid #303744;
-
-    background: #191d25;
-
-    color: #ffffff;
-
-    cursor: pointer;
-}
-
-.secondary-button:hover {
-    background: #202630;
-}
-
-.primary-button:active,
-.secondary-button:active {
-    transform: scale(0.98);
-}
-
-
-/* =========================================================
-   DIVIDER
-========================================================= */
-
-.divider {
-    display: flex;
-    align-items: center;
-
-    gap: 12px;
-
-    margin: 20px 0;
-
-    color: #596171;
-
-    font-size: 10px;
-}
-
-.divider::before,
-.divider::after {
-    content: "";
-
-    flex: 1;
-
-    height: 1px;
-
-    background: #252a34;
 }
 
 
@@ -873,7 +642,6 @@ button:disabled {
     padding: 13px;
 
     border: 1px solid #202632;
-
     border-radius: 12px;
 
     background: rgba(17, 21, 29, 0.8);
@@ -881,7 +649,6 @@ button:disabled {
 
 .notice-icon {
     flex-shrink: 0;
-
     font-size: 17px;
 }
 
@@ -895,7 +662,6 @@ button:disabled {
     color: #737c8c;
 
     font-size: 11px;
-
     line-height: 1.5;
 }
 
@@ -915,7 +681,6 @@ button:disabled {
 
 .call-screen.active {
     display: flex;
-
     flex-direction: column;
 }
 
@@ -934,44 +699,22 @@ button:disabled {
     border-bottom: 1px solid #222733;
 }
 
-.back-button,
-.copy-button {
+.back-button {
+    width: 40px;
     height: 36px;
 
     border: 1px solid #2a303c;
-
     border-radius: 9px;
 
     background: #181c24;
-
     color: #ffffff;
 
-    cursor: pointer;
-
-    transition:
-        background 0.2s ease,
-        transform 0.1s ease;
-}
-
-.back-button {
-    width: 40px;
-
     font-size: 20px;
+
+    cursor: pointer;
 }
 
-.copy-button {
-    padding: 0 12px;
-
-    font-size: 12px;
-}
-
-.back-button:hover,
-.copy-button:hover {
-    background: #222732;
-}
-
-.back-button:active,
-.copy-button:active {
+.back-button:active {
     transform: scale(0.97);
 }
 
@@ -985,7 +728,6 @@ button:disabled {
 
 .call-info strong {
     display: block;
-
     font-size: 13px;
 }
 
@@ -994,15 +736,9 @@ button:disabled {
 
     margin-top: 3px;
 
-    overflow: hidden;
-
     color: #737b8a;
 
     font-size: 10px;
-
-    text-overflow: ellipsis;
-
-    white-space: nowrap;
 }
 
 .meet-container {
@@ -1014,7 +750,7 @@ button:disabled {
 
 
 /* =========================================================
-   INCOMING / CALLING OVERLAY
+   OVERLAY
 ========================================================= */
 
 .call-overlay {
@@ -1034,13 +770,12 @@ button:disabled {
     background: rgba(0, 0, 0, 0.78);
 
     backdrop-filter: blur(7px);
-
     -webkit-backdrop-filter: blur(7px);
 }
 
 
 /* =========================================================
-   INCOMING CARD
+   INCOMING
 ========================================================= */
 
 .incoming-call-card {
@@ -1050,7 +785,6 @@ button:disabled {
     padding: 28px 22px;
 
     border: 1px solid #303746;
-
     border-radius: 20px;
 
     background: #11151d;
@@ -1059,32 +793,7 @@ button:disabled {
         0 25px 80px rgba(0, 0, 0, 0.65);
 
     text-align: center;
-
-    animation:
-        callCardIn 0.25s ease-out;
 }
-
-@keyframes callCardIn {
-
-    from {
-        opacity: 0;
-
-        transform:
-            scale(0.92);
-    }
-
-    to {
-        opacity: 1;
-
-        transform:
-            scale(1);
-    }
-}
-
-
-/* =========================================================
-   INCOMING ICON
-========================================================= */
 
 .incoming-icon {
     width: 68px;
@@ -1097,46 +806,15 @@ button:disabled {
     margin: 0 auto 16px;
 
     border: 1px solid #166534;
-
     border-radius: 50%;
 
     background: #052e16;
 
     font-size: 29px;
-
-    animation:
-        incomingPulse 1.5s ease-in-out infinite;
 }
-
-@keyframes incomingPulse {
-
-    0%,
-    100% {
-        transform: scale(1);
-
-        box-shadow:
-            0 0 0 0
-            rgba(34, 197, 94, 0.35);
-    }
-
-    50% {
-        transform: scale(1.05);
-
-        box-shadow:
-            0 0 0 12px
-            rgba(34, 197, 94, 0);
-    }
-}
-
-
-/* =========================================================
-   INCOMING TEXT
-========================================================= */
 
 .incoming-title {
     margin-bottom: 7px;
-
-    color: #ffffff;
 
     font-size: 21px;
     font-weight: 700;
@@ -1155,7 +833,6 @@ button:disabled {
     font-weight: 700;
 
     text-overflow: ellipsis;
-
     white-space: nowrap;
 }
 
@@ -1166,11 +843,6 @@ button:disabled {
 
     font-size: 13px;
 }
-
-
-/* =========================================================
-   INCOMING ACTIONS
-========================================================= */
 
 .incoming-actions {
     display: flex;
@@ -1191,17 +863,12 @@ button:disabled {
     font-weight: 700;
 
     cursor: pointer;
-
-    transition:
-        background 0.2s ease,
-        transform 0.1s ease;
 }
 
 .accept-button {
     border: none;
 
     background: #16a34a;
-
     color: #ffffff;
 }
 
@@ -1209,29 +876,16 @@ button:disabled {
     background: #15803d;
 }
 
-.accept-button:active {
-    transform: scale(0.97);
-}
-
 .decline-button {
     border: 1px solid #3a414e;
 
     background: #1a1e27;
-
     color: #ffffff;
-}
-
-.decline-button:hover {
-    background: #242934;
-}
-
-.decline-button:active {
-    transform: scale(0.97);
 }
 
 
 /* =========================================================
-   CALLING CARD
+   CALLING
 ========================================================= */
 
 .calling-card {
@@ -1241,7 +895,6 @@ button:disabled {
     padding: 30px 22px;
 
     border: 1px solid #2b313e;
-
     border-radius: 20px;
 
     background: #11151d;
@@ -1250,15 +903,7 @@ button:disabled {
 
     box-shadow:
         0 25px 80px rgba(0, 0, 0, 0.65);
-
-    animation:
-        callCardIn 0.25s ease-out;
 }
-
-
-/* =========================================================
-   CALLING ICON
-========================================================= */
 
 .calling-icon {
     width: 68px;
@@ -1271,38 +916,15 @@ button:disabled {
     margin: 0 auto 17px;
 
     border: 1px solid #1e40af;
-
     border-radius: 50%;
 
     background: #172554;
 
     font-size: 29px;
-
-    animation:
-        callingPulse 1.4s ease-in-out infinite;
 }
-
-@keyframes callingPulse {
-
-    0%,
-    100% {
-        transform: scale(1);
-    }
-
-    50% {
-        transform: scale(1.08);
-    }
-}
-
-
-/* =========================================================
-   CALLING TEXT
-========================================================= */
 
 .calling-title {
     margin-bottom: 7px;
-
-    color: #ffffff;
 
     font-size: 21px;
     font-weight: 700;
@@ -1321,7 +943,6 @@ button:disabled {
     font-weight: 700;
 
     text-overflow: ellipsis;
-
     white-space: nowrap;
 }
 
@@ -1335,7 +956,7 @@ button:disabled {
 
 
 /* =========================================================
-   CANCEL BUTTON
+   CANCEL
 ========================================================= */
 
 .cancel-button {
@@ -1345,63 +966,19 @@ button:disabled {
     margin-top: 25px;
 
     border: 1px solid #3a414e;
-
     border-radius: 10px;
 
     background: #1a1e27;
-
     color: #ffffff;
 
     font-size: 14px;
     font-weight: 700;
 
     cursor: pointer;
-
-    transition:
-        background 0.2s ease,
-        transform 0.1s ease;
 }
 
 .cancel-button:hover {
     background: #242934;
-}
-
-.cancel-button:active {
-    transform: scale(0.97);
-}
-
-
-/* =========================================================
-   CALL STATUS
-========================================================= */
-
-.call-status {
-    margin-top: 10px;
-
-    color: #737c8c;
-
-    font-size: 12px;
-
-    text-align: center;
-}
-
-.call-error {
-    margin-top: 10px;
-
-    color: #ef4444;
-
-    font-size: 12px;
-
-    text-align: center;
-}
-
-
-/* =========================================================
-   HIDDEN
-========================================================= */
-
-.hidden {
-    display: none !important;
 }
 
 
@@ -1417,7 +994,6 @@ button:disabled {
 
     .home-screen {
         justify-content: flex-start;
-
         padding: 24px 14px 30px;
     }
 
@@ -1442,7 +1018,6 @@ button:disabled {
 
     .hero p {
         margin-bottom: 22px;
-
         font-size: 13px;
     }
 
@@ -1454,17 +1029,12 @@ button:disabled {
         display: none;
     }
 
-    .notice {
-        margin-bottom: 20px;
-    }
-
     .online-users {
-        max-height: 300px;
+        max-height: 320px;
     }
 
     .online-user-item {
         min-height: 60px;
-
         padding: 8px;
     }
 
@@ -1476,14 +1046,12 @@ button:disabled {
     .online-call-button {
         min-width: 64px;
         height: 36px;
-
         font-size: 11px;
     }
 
     .incoming-call-card,
     .calling-card {
         max-width: 100%;
-
         border-radius: 17px;
     }
 
@@ -1493,12 +1061,6 @@ button:disabled {
 
     .call-info {
         margin-left: 8px;
-    }
-
-    .copy-button {
-        padding: 0 9px;
-
-        font-size: 11px;
     }
 }
 
