@@ -1,570 +1,446 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-
-    <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>1v1 Video Call</title>
-
-    <link
-        rel="stylesheet"
-        href="style.css"
-    >
-
-</head>
-
-
-<body>
-
-<div class="app">
-
-
-    <!-- =====================================================
-         TOP BAR
-    ====================================================== -->
-
-    <header class="topbar">
-
-        <div class="brand">
-
-            <div class="logo">
-                V
-            </div>
-
-            <div>
-
-                <div class="title">
-                    Video Call
-                </div>
-
-                <div class="subtitle">
-                    Private 1 vs 1
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <div class="status">
-
-            <span></span>
-
-            <span id="connectionStatus">
-                Online
-            </span>
-
-        </div>
-
-    </header>
-
-
-
-    <!-- =====================================================
-         MAIN
-    ====================================================== -->
-
-    <main>
-
-
-        <!-- =================================================
-             HOME
-        ================================================== -->
-
-        <section
-            id="homeScreen"
-            class="home-screen"
-        >
-
-
-            <!-- =============================================
-                 HERO
-            ============================================== -->
-
-            <div class="hero">
-
-                <div class="hero-icon">
-                    📹
-                </div>
-
-
-                <h1>
-                    1 vs 1 Video Call
-                </h1>
-
-
-                <p>
-                    Enter your name and select someone
-                    from the online users list to call.
-                </p>
-
-            </div>
-
-
-
-            <!-- =============================================
-                 USER CARD
-            ============================================== -->
-
-            <div class="card">
-
-
-                <!-- =========================================
-                     NAME
-                ========================================== -->
-
-                <label>
-                    Your Name
-                </label>
-
-
-                <input
-                    id="nameInput"
-                    type="text"
-                    maxlength="40"
-                    placeholder="Enter your name"
-                    autocomplete="name"
-                >
-
-
-
-                <!-- =========================================
-                     ONLINE USERS
-                ========================================== -->
-
-                <div class="online-users-header">
-
-                    <div>
-
-                        <strong>
-                            Online Users
-                        </strong>
-
-                        <span
-                            id="onlineCount"
-                            class="online-count"
-                        >
-                            0
-                        </span>
-
-                    </div>
-
-
-                    <button
-                        id="refreshUsersButton"
-                        type="button"
-                        class="refresh-button"
-                    >
-                        ↻
-                    </button>
-
-                </div>
-
-
-
-                <div
-                    id="onlineUsers"
-                    class="online-users"
-                >
-
-                    <div
-                        id="noUsersMessage"
-                        class="no-users"
-                    >
-
-                        <div class="no-users-icon">
-                            👥
-                        </div>
-
-                        <div>
-                            No other users online
-                        </div>
-
-                        <small>
-                            Online users will appear here.
-                        </small>
-
-                    </div>
-
-                </div>
-
-
-
-                <!-- =========================================
-                     DIVIDER
-                ========================================== -->
-
-                <div class="divider">
-
-                    <span>
-                        OR
-                    </span>
-
-                </div>
-
-
-
-                <!-- =========================================
-                     ROOM CODE
-                ========================================== -->
-
-                <label
-                    class="room-label"
-                >
-                    Room Code
-                </label>
-
-
-                <input
-                    id="roomInput"
-                    type="text"
-                    maxlength="40"
-                    placeholder="Enter room code"
-                    autocomplete="off"
-                >
-
-
-                <button
-                    id="joinButton"
-                    class="primary-button"
-                    type="button"
-                >
-                    Join Video Call
-                </button>
-
-
-
-                <div class="divider">
-
-                    <span>
-                        OR
-                    </span>
-
-                </div>
-
-
-                <button
-                    id="createButton"
-                    class="secondary-button"
-                    type="button"
-                >
-                    Create New Room
-                </button>
-
-            </div>
-
-
-
-            <!-- =============================================
-                 NOTICE
-            ============================================== -->
-
-            <div class="notice">
-
-                <div class="notice-icon">
-                    🔒
-                </div>
-
-
-                <div>
-
-                    <strong>
-                        Private 1 vs 1 Call
-                    </strong>
-
-
-                    <p>
-                        Select an online user to send a
-                        private video call. No User ID is
-                        required.
-                    </p>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-
-        <!-- =================================================
-             CALL SCREEN
-        ================================================== -->
-
-        <section
-            id="callScreen"
-            class="call-screen"
-        >
-
-
-            <div class="call-topbar">
-
-
-                <button
-                    id="backButton"
-                    class="back-button"
-                    type="button"
-                >
-                    ←
-                </button>
-
-
-
-                <div class="call-info">
-
-                    <strong>
-                        Private Call
-                    </strong>
-
-
-                    <span id="roomLabel">
-                        -
-                    </span>
-
-                </div>
-
-
-
-                <button
-                    id="copyButton"
-                    class="copy-button"
-                    type="button"
-                >
-                    Copy Room
-                </button>
-
-            </div>
-
-
-
-            <div
-                id="meet"
-                class="meet-container"
-            ></div>
-
-        </section>
-
-    </main>
-
-</div>
-
-
-
-<!-- =========================================================
-     INCOMING CALL OVERLAY
-     
-     app.js will control this.
-========================================================== -->
-
-<div
-    id="incomingCallOverlay"
-    class="call-overlay"
-    style="display:none;"
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
 >
 
-    <div class="incoming-call-card">
+<title>1v1 Video Call</title>
 
-        <div class="incoming-icon">
-            📞
+<link
+    rel="stylesheet"
+    href="style.css"
+>
+
+</head><body><div class="app"><!-- =====================================================
+     TOP BAR
+====================================================== -->
+
+<header class="topbar">
+
+    <div class="brand">
+
+        <div class="logo">
+            V
         </div>
 
+        <div>
 
-        <div class="incoming-title">
-            Incoming Call
-        </div>
+            <div class="title">
+                Video Call
+            </div>
 
-
-        <div
-            id="incomingCallerName"
-            class="incoming-name"
-        >
-            Someone
-        </div>
-
-
-        <div class="incoming-subtitle">
-            is calling you
-        </div>
-
-
-        <div class="incoming-actions">
-
-            <button
-                id="declineCallButton"
-                type="button"
-                class="decline-button"
-            >
-                Decline
-            </button>
-
-
-            <button
-                id="acceptCallButton"
-                type="button"
-                class="accept-button"
-            >
-                Accept
-            </button>
+            <div class="subtitle">
+                Private 1 vs 1
+            </div>
 
         </div>
 
     </div>
 
-</div>
+
+    <div class="status">
+
+        <span></span>
+
+        <span id="connectionStatus">
+            Online
+        </span>
+
+    </div>
+
+</header>
 
 
 
-<!-- =========================================================
-     OUTGOING CALL OVERLAY
-     
-     Shown while waiting for receiver.
-========================================================== -->
+<!-- =====================================================
+     MAIN
+====================================================== -->
 
-<div
-    id="callingOverlay"
-    class="call-overlay"
-    style="display:none;"
->
+<main>
 
-    <div class="calling-card">
 
-        <div class="calling-icon">
-            📞
+    <!-- =================================================
+         HOME SCREEN
+    ================================================== -->
+
+    <section
+        id="homeScreen"
+        class="home-screen"
+    >
+
+
+        <!-- =============================================
+             HERO
+        ============================================== -->
+
+        <div class="hero">
+
+            <div class="hero-icon">
+                📹
+            </div>
+
+
+            <h1>
+                1 vs 1 Video Call
+            </h1>
+
+
+            <p>
+                Enter your name and select someone
+                from the online users list to call.
+            </p>
+
         </div>
 
 
-        <div class="calling-title">
-            Calling...
+
+        <!-- =============================================
+             USER CARD
+        ============================================== -->
+
+        <div class="card">
+
+
+            <!-- =========================================
+                 YOUR NAME
+            ========================================== -->
+
+            <label for="nameInput">
+                Your Name
+            </label>
+
+
+            <input
+                id="nameInput"
+                type="text"
+                maxlength="40"
+                placeholder="Enter your name"
+                autocomplete="name"
+            >
+
+
+
+            <!-- =========================================
+                 ONLINE USERS HEADER
+            ========================================== -->
+
+            <div class="online-users-header">
+
+                <div>
+
+                    <strong>
+                        Online Users
+                    </strong>
+
+                    <span
+                        id="onlineCount"
+                        class="online-count"
+                    >
+                        0
+                    </span>
+
+                </div>
+
+
+                <button
+                    id="refreshUsersButton"
+                    type="button"
+                    class="refresh-button"
+                    aria-label="Refresh online users"
+                >
+                    ↻
+                </button>
+
+            </div>
+
+
+
+            <!-- =========================================
+                 ONLINE USERS LIST
+            ========================================== -->
+
+            <div
+                id="onlineUsers"
+                class="online-users"
+            >
+
+                <div
+                    id="noUsersMessage"
+                    class="no-users"
+                >
+
+                    <div class="no-users-icon">
+                        👥
+                    </div>
+
+                    <div>
+                        No other users online
+                    </div>
+
+                    <small>
+                        Online users will appear here.
+                    </small>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- =========================================
+                 DIVIDER
+            ========================================== -->
+
+            <div class="divider">
+
+                <span>
+                    OR
+                </span>
+
+            </div>
+
+
+
+            <!-- =========================================
+                 ROOM CODE
+            ========================================== -->
+
+            <label
+                class="room-label"
+                for="roomInput"
+            >
+                Room Code
+            </label>
+
+
+            <input
+                id="roomInput"
+                type="text"
+                maxlength="40"
+                placeholder="Enter room code"
+                autocomplete="off"
+            >
+
+
+            <button
+                id="joinButton"
+                class="primary-button"
+                type="button"
+            >
+                Join Video Call
+            </button>
+
+
+
+            <div class="divider">
+
+                <span>
+                    OR
+                </span>
+
+            </div>
+
+
+            <button
+                id="createButton"
+                class="secondary-button"
+                type="button"
+            >
+                Create New Room
+            </button>
+
         </div>
+
+
+
+        <!-- =============================================
+             NOTICE
+        ============================================== -->
+
+        <div class="notice">
+
+            <div class="notice-icon">
+                🔒
+            </div>
+
+
+            <div>
+
+                <strong>
+                    Private 1 vs 1 Call
+                </strong>
+
+
+                <p>
+                    Select an online user to send a
+                    private video call. No User ID is
+                    required.
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         CALL SCREEN
+    ================================================== -->
+
+    <section
+        id="callScreen"
+        class="call-screen"
+    >
+
+
+        <div class="call-topbar">
+
+
+            <button
+                id="backButton"
+                class="back-button"
+                type="button"
+                aria-label="Back"
+            >
+                ←
+            </button>
+
+
+
+            <div class="call-info">
+
+                <strong>
+                    Private Call
+                </strong>
+
+
+                <span id="roomLabel">
+                    -
+                </span>
+
+            </div>
+
+
+
+            <button
+                id="copyButton"
+                class="copy-button"
+                type="button"
+            >
+                Copy Room
+            </button>
+
+        </div>
+
 
 
         <div
-            id="callingReceiverName"
-            class="calling-name"
+            id="meet"
+            class="meet-container"
+        ></div>
+
+    </section>
+
+</main>
+
+</div><!-- =========================================================
+     INCOMING CALL OVERLAY
+========================================================== --><div
+    id="incomingCallOverlay"
+    class="call-overlay"
+    style="display:none;"
+><div class="incoming-call-card">
+
+    <div class="incoming-icon">
+        📞
+    </div>
+
+
+    <div class="incoming-title">
+        Incoming Call
+    </div>
+
+
+    <div
+        id="incomingCallerName"
+        class="incoming-name"
+    >
+        Someone
+    </div>
+
+
+    <div class="incoming-subtitle">
+        is calling you
+    </div>
+
+
+    <div class="incoming-actions">
+
+        <button
+            id="declineCallButton"
+            type="button"
+            class="decline-button"
         >
-            User
-        </div>
-
-
-        <div class="calling-subtitle">
-            Waiting for them to answer
-        </div>
+            Decline
+        </button>
 
 
         <button
-            id="cancelCallButton"
+            id="acceptCallButton"
             type="button"
-            class="cancel-button"
+            class="accept-button"
         >
-            Cancel
+            Accept
         </button>
 
     </div>
 
 </div>
 
+</div><!-- =========================================================
+     OUTGOING CALL OVERLAY
+========================================================== --><div
+    id="callingOverlay"
+    class="call-overlay"
+    style="display:none;"
+><div class="calling-card">
+
+    <div class="calling-icon">
+        📞
+    </div>
 
 
-<!-- =========================================================
+    <div class="calling-title">
+        Calling...
+    </div>
+
+
+    <div
+        id="callingReceiverName"
+        class="calling-name"
+    >
+        User
+    </div>
+
+
+    <div class="calling-subtitle">
+        Waiting for them to answer
+    </div>
+
+
+    <button
+        id="cancelCallButton"
+        type="button"
+        class="cancel-button"
+    >
+        Cancel
+    </button>
+
+</div>
+
+</div><!-- =========================================================
      APP SCRIPT
-========================================================== -->
-
-<script src="app.js"></script>
-
-
-
-<!-- =========================================================
-     ONLINE USER UI
-     
-     app.js exposes:
-     
-     window.callUser(userId, userName)
-     window.refreshOnlineUsers()
-========================================================== -->
-
-<script>
-
-document.addEventListener(
-    "DOMContentLoaded",
-    function () {
-
-
-        /* ================================================
-           REFRESH ONLINE USERS
-        ================================================= */
-
-        const refreshUsersButton =
-            document.getElementById(
-                "refreshUsersButton"
-            );
-
-
-        if (refreshUsersButton) {
-
-            refreshUsersButton.addEventListener(
-                "click",
-                function () {
-
-                    if (
-                        typeof window.refreshOnlineUsers ===
-                        "function"
-                    ) {
-
-                        window.refreshOnlineUsers();
-
-                    }
-
-                }
-            );
-
-        }
-
-
-
-        /* ================================================
-           NAME CHANGE
-           
-           app.js will handle presence registration.
-        ================================================= */
-
-        const nameInput =
-            document.getElementById(
-                "nameInput"
-            );
-
-
-        if (nameInput) {
-
-            nameInput.addEventListener(
-                "change",
-                function () {
-
-                    if (
-                        typeof window.updateMyPresence ===
-                        "function"
-                    ) {
-
-                        window.updateMyPresence();
-
-                    }
-
-                }
-            );
-
-        }
-
-    }
-);
-
-</script>
-
-
-</body>
-
-</html>
+========================================================== --><script src="app.js"></script></body></html>
