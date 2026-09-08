@@ -46,10 +46,8 @@ function json(
     return new Response(
         JSON.stringify(data),
         {
-            status,
-
-            headers:
-                corsHeaders()
+            status: status,
+            headers: corsHeaders()
         }
     );
 
@@ -67,8 +65,7 @@ function base64url(
     let bytes;
 
     if (
-        input instanceof
-        Uint8Array
+        input instanceof Uint8Array
     ) {
 
         bytes = input;
@@ -77,7 +74,7 @@ function base64url(
 
         bytes =
             new TextEncoder().encode(
-                input
+                String(input)
             );
 
     }
@@ -126,6 +123,94 @@ function base64url(
 
 
 /* ============================================================
+   NORMALIZE PRIVATE KEY
+============================================================ */
+
+function normalizePrivateKey(
+    pem
+) {
+
+    if (
+        typeof pem !==
+        "string"
+    ) {
+
+        throw new Error(
+            "JAAS_PRIVATE_KEY is not a string."
+        );
+
+    }
+
+
+    let key =
+        pem
+            .replace(
+                /^\uFEFF/,
+                ""
+            )
+            .trim();
+
+
+    /*
+     * If Cloudflare Secret was pasted with literal \n
+     * convert it back to real line breaks.
+     */
+
+    key =
+        key.replace(
+            /\\n/g,
+            "\n"
+        );
+
+
+    /*
+     * Remove accidental surrounding quotes.
+     */
+
+    if (
+        (
+            key.startsWith('"') &&
+            key.endsWith('"')
+        ) ||
+        (
+            key.startsWith("'") &&
+            key.endsWith("'")
+        )
+    ) {
+
+        key =
+            key.slice(
+                1,
+                -1
+            ).trim();
+
+    }
+
+
+    /*
+     * Normalize Windows line endings.
+     */
+
+    key =
+        key.replace(
+            /\r\n/g,
+            "\n"
+        );
+
+
+    key =
+        key.replace(
+            /\r/g,
+            "\n"
+        );
+
+
+    return key.trim();
+
+}
+
+
+/* ============================================================
    PEM -> DER
 ============================================================ */
 
@@ -133,14 +218,63 @@ function pemToArrayBuffer(
     pem
 ) {
 
+    const normalized =
+        normalizePrivateKey(
+            pem
+        );
+
+
+    /*
+     * JaaS should normally provide a PKCS#8 key.
+     */
+
+    if (
+        !normalized.includes(
+            "-----BEGIN PRIVATE KEY-----"
+        )
+    ) {
+
+        if (
+            normalized.includes(
+                "-----BEGIN RSA PRIVATE KEY-----"
+            )
+        ) {
+
+            throw new Error(
+                "Private key is PKCS#1 (BEGIN RSA PRIVATE KEY). JaaS/Cloudflare Worker requires PKCS#8 (BEGIN PRIVATE KEY)."
+            );
+
+        }
+
+
+        throw new Error(
+            "Invalid PEM format. Expected -----BEGIN PRIVATE KEY-----."
+        );
+
+    }
+
+
+    if (
+        !normalized.includes(
+            "-----END PRIVATE KEY-----"
+        )
+    ) {
+
+        throw new Error(
+            "Private key is missing -----END PRIVATE KEY-----."
+        );
+
+    }
+
+
     const base64 =
-        pem
+        normalized
             .replace(
-                /-----BEGIN [^-]+-----/g,
+                /-----BEGIN PRIVATE KEY-----/g,
                 ""
             )
             .replace(
-                /-----END [^-]+-----/g,
+                /-----END PRIVATE KEY-----/g,
                 ""
             )
             .replace(
@@ -149,8 +283,29 @@ function pemToArrayBuffer(
             );
 
 
-    const binary =
-        atob(base64);
+    if (!base64) {
+
+        throw new Error(
+            "Private key body is empty."
+        );
+
+    }
+
+
+    let binary;
+
+    try {
+
+        binary =
+            atob(base64);
+
+    } catch (error) {
+
+        throw new Error(
+            "Private key contains invalid Base64 data."
+        );
+
+    }
 
 
     const bytes =
@@ -190,27 +345,43 @@ async function importPrivateKey(
         );
 
 
-    return crypto.subtle.importKey(
+    try {
 
-        "pkcs8",
+        return await crypto.subtle.importKey(
 
-        keyData,
+            "pkcs8",
 
-        {
-            name:
-                "RSASSA-PKCS1-v1_5",
+            keyData,
 
-            hash:
-                "SHA-256"
-        },
+            {
+                name:
+                    "RSASSA-PKCS1-v1_5",
 
-        false,
+                hash:
+                    "SHA-256"
+            },
 
-        [
-            "sign"
-        ]
+            false,
 
-    );
+            [
+                "sign"
+            ]
+
+        );
+
+    } catch (error) {
+
+        throw new Error(
+            "PKCS#8 private key import failed: " +
+            (
+                error &&
+                error.message
+                    ? error.message
+                    : String(error)
+            )
+        );
+
+    }
 
 }
 
@@ -237,12 +408,16 @@ async function createJWT(
      */
 
     const exp =
-        now + 60 * 60 * 2;
+        now + (60 * 60 * 2);
 
 
     const userId =
         crypto.randomUUID();
 
+
+    /* ========================================================
+       JWT HEADER
+    ======================================================== */
 
     const header = {
 
@@ -257,6 +432,10 @@ async function createJWT(
 
     };
 
+
+    /* ========================================================
+       JWT PAYLOAD
+    ======================================================== */
 
     const payload = {
 
@@ -328,6 +507,10 @@ async function createJWT(
     };
 
 
+    /* ========================================================
+       ENCODE HEADER
+    ======================================================== */
+
     const encodedHeader =
         base64url(
             JSON.stringify(
@@ -335,6 +518,10 @@ async function createJWT(
             )
         );
 
+
+    /* ========================================================
+       ENCODE PAYLOAD
+    ======================================================== */
 
     const encodedPayload =
         base64url(
@@ -344,11 +531,19 @@ async function createJWT(
         );
 
 
+    /* ========================================================
+       UNSIGNED JWT
+    ======================================================== */
+
     const unsignedToken =
         encodedHeader +
         "." +
         encodedPayload;
 
+
+    /* ========================================================
+       IMPORT PRIVATE KEY
+    ======================================================== */
 
     const key =
         await importPrivateKey(
@@ -356,22 +551,48 @@ async function createJWT(
         );
 
 
-    const signature =
-        await crypto.subtle.sign(
+    /* ========================================================
+       SIGN JWT
+    ======================================================== */
 
-            {
-                name:
-                    "RSASSA-PKCS1-v1_5"
-            },
+    let signature;
 
-            key,
+    try {
 
-            new TextEncoder().encode(
-                unsignedToken
+        signature =
+            await crypto.subtle.sign(
+
+                {
+                    name:
+                        "RSASSA-PKCS1-v1_5"
+                },
+
+                key,
+
+                new TextEncoder().encode(
+                    unsignedToken
+                )
+
+            );
+
+    } catch (error) {
+
+        throw new Error(
+            "JWT signing failed: " +
+            (
+                error &&
+                error.message
+                    ? error.message
+                    : String(error)
             )
-
         );
 
+    }
+
+
+    /* ========================================================
+       FINAL JWT
+    ======================================================== */
 
     return (
         unsignedToken +
@@ -415,7 +636,9 @@ export default {
             return new Response(
                 null,
                 {
-                    status: 204,
+                    status:
+                        204,
+
                     headers:
                         corsHeaders()
                 }
@@ -626,15 +849,31 @@ export default {
             } catch (error) {
 
                 console.error(
+                    "JWT ERROR:",
                     error
                 );
 
+
+                /*
+                 * Diagnostic information.
+                 *
+                 * This does NOT return the private key.
+                 * It only returns the error message so
+                 * we can identify the key/import problem.
+                 */
 
                 return json(
 
                     {
                         error:
-                            "JWT generation failed."
+                            "JWT generation failed.",
+
+                        details:
+                            error &&
+                            error.message
+                                ? error.message
+                                : String(error)
+
                     },
 
                     500
@@ -653,7 +892,7 @@ export default {
            style.css
            app.js
            
-           are served from the assets directory.
+           are served from Cloudflare Assets.
         ====================================================== */
 
         if (
