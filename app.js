@@ -21,10 +21,13 @@ const meet = document.getElementById("meet");
 
 const onlineUsers = document.getElementById("onlineUsers");
 const onlineCount = document.getElementById("onlineCount");
-const refreshUsersButton = document.getElementById("refreshUsersButton");
-const noUsersMessage = document.getElementById("noUsersMessage");
+const refreshUsersButton =
+    document.getElementById("refreshUsersButton");
+const noUsersMessage =
+    document.getElementById("noUsersMessage");
 
-const connectionStatus = document.getElementById("connectionStatus");
+const connectionStatus =
+    document.getElementById("connectionStatus");
 
 
 /* ============================================================
@@ -88,7 +91,6 @@ let currentReceiverId = "";
 let currentReceiverName = "";
 
 let incomingCall = null;
-
 let incomingCallVisible = false;
 
 let callStatusTimer = null;
@@ -104,7 +106,7 @@ let nameUpdateTimer = null;
 
 /* ============================================================
    INTERNAL USER ID
-   User never needs to enter this manually.
+   User never enters or sees this.
 ============================================================ */
 
 function getUserId() {
@@ -112,7 +114,10 @@ function getUserId() {
     let userId = null;
 
     try {
-        userId = localStorage.getItem("video_call_user_id");
+        userId =
+            localStorage.getItem(
+                "video_call_user_id"
+            );
     } catch (_) {}
 
     if (!userId) {
@@ -121,20 +126,28 @@ function getUserId() {
             typeof crypto !== "undefined" &&
             typeof crypto.randomUUID === "function"
         ) {
-            userId = crypto.randomUUID();
+
+            userId =
+                crypto.randomUUID();
+
         } else {
+
             userId =
                 "user-" +
                 Date.now().toString(36) +
                 "-" +
-                Math.random().toString(36).slice(2, 12);
+                Math.random()
+                    .toString(36)
+                    .slice(2, 12);
         }
 
         try {
+
             localStorage.setItem(
                 "video_call_user_id",
                 userId
             );
+
         } catch (_) {}
     }
 
@@ -151,10 +164,12 @@ const myUserId = getUserId();
 function saveMyName(name) {
 
     try {
+
         localStorage.setItem(
             "video_call_name",
             String(name || "").trim()
         );
+
     } catch (_) {}
 }
 
@@ -164,14 +179,18 @@ function loadMyName() {
     try {
 
         const saved =
-            localStorage.getItem("video_call_name");
+            localStorage.getItem(
+                "video_call_name"
+            );
 
         if (
             saved &&
             nameInput &&
             !nameInput.value
         ) {
-            nameInput.value = saved;
+
+            nameInput.value =
+                saved;
         }
 
     } catch (_) {}
@@ -185,7 +204,8 @@ function loadMyName() {
 function setConnectionStatus(text) {
 
     if (connectionStatus) {
-        connectionStatus.textContent = text;
+        connectionStatus.textContent =
+            text;
     }
 }
 
@@ -194,37 +214,74 @@ function setConnectionStatus(text) {
    API REQUEST
 ============================================================ */
 
-async function apiRequest(path, body, options = {}) {
+async function apiRequest(
+    path,
+    body,
+    options = {}
+) {
 
     const fetchOptions = {
+
         method: "POST",
+
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type":
+                "application/json"
         },
-        body: JSON.stringify(body || {})
+
+        body:
+            JSON.stringify(
+                body || {}
+            )
     };
 
+
     if (options.keepalive) {
-        fetchOptions.keepalive = true;
+
+        fetchOptions.keepalive =
+            true;
     }
 
-    const response =
-        await fetch(API + path, fetchOptions);
+
+    let response;
+
+    try {
+
+        response =
+            await fetch(
+                API + path,
+                fetchOptions
+            );
+
+    } catch (error) {
+
+        throw new Error(
+            "Network connection failed."
+        );
+    }
+
 
     let data = {};
 
     try {
-        data = await response.json();
+
+        data =
+            await response.json();
+
     } catch (_) {}
+
 
     if (!response.ok) {
 
         throw new Error(
+
             data.error ||
             data.message ||
             "Request failed."
+
         );
     }
+
 
     return data;
 }
@@ -243,12 +300,17 @@ function generateRoom() {
 
     let result = "";
 
-    for (let i = 0; i < 10; i++) {
+    for (
+        let i = 0;
+        i < 10;
+        i++
+    ) {
 
         result +=
             chars.charAt(
                 Math.floor(
-                    Math.random() * chars.length
+                    Math.random() *
+                    chars.length
                 )
             );
     }
@@ -261,7 +323,10 @@ function cleanRoom(value) {
 
     return String(value || "")
         .trim()
-        .replace(/[^a-zA-Z0-9_-]/g, "")
+        .replace(
+            /[^a-zA-Z0-9_-]/g,
+            ""
+        )
         .slice(0, 40);
 }
 
@@ -273,7 +338,9 @@ function cleanRoom(value) {
 function getMyName() {
 
     return String(
-        nameInput ? nameInput.value : ""
+        nameInput
+            ? nameInput.value
+            : ""
     ).trim();
 }
 
@@ -299,30 +366,41 @@ function getInitial(name) {
 
 async function registerPresence() {
 
-    const name = getMyName();
+    const name =
+        getMyName();
 
     if (!name) {
 
-        setConnectionStatus("Offline");
+        setConnectionStatus(
+            "Offline"
+        );
 
         renderOnlineUsers([]);
 
         return;
     }
 
+
     saveMyName(name);
+
 
     try {
 
         await apiRequest(
             "/presence/online",
             {
-                userId: myUserId,
-                name: name
+                userId:
+                    myUserId,
+
+                name:
+                    name
             }
         );
 
-        setConnectionStatus("Online");
+
+        setConnectionStatus(
+            "Online"
+        );
 
     } catch (error) {
 
@@ -331,7 +409,9 @@ async function registerPresence() {
             error
         );
 
-        setConnectionStatus("Reconnecting...");
+        setConnectionStatus(
+            "Reconnecting..."
+        );
     }
 }
 
@@ -342,7 +422,8 @@ async function registerPresence() {
 
 async function pollOnlineUsers() {
 
-    const name = getMyName();
+    const name =
+        getMyName();
 
     if (!name) {
 
@@ -351,18 +432,23 @@ async function pollOnlineUsers() {
         return;
     }
 
+
     try {
 
         const data =
             await apiRequest(
                 "/presence/poll",
                 {
-                    userId: myUserId
+                    userId:
+                        myUserId
                 }
             );
 
+
         renderOnlineUsers(
-            Array.isArray(data.users)
+            Array.isArray(
+                data.users
+            )
                 ? data.users
                 : []
         );
@@ -384,20 +470,30 @@ async function pollOnlineUsers() {
 function renderOnlineUsers(users) {
 
     if (!onlineUsers) {
+
+        console.error(
+            "onlineUsers element not found."
+        );
+
         return;
     }
 
+
     onlineUsers.innerHTML = "";
+
 
     const list =
         Array.isArray(users)
             ? users
             : [];
 
+
     if (onlineCount) {
+
         onlineCount.textContent =
             String(list.length);
     }
+
 
     if (list.length === 0) {
 
@@ -414,155 +510,237 @@ function renderOnlineUsers(users) {
         return;
     }
 
+
     if (noUsersMessage) {
+
         noUsersMessage.style.display =
             "none";
     }
 
 
-    list.forEach(user => {
+    list.forEach(
+        user => {
 
-        if (!user || !user.userId) {
-            return;
-        }
-
-        const item =
-            document.createElement("div");
-
-        item.className =
-            "online-user-item";
+            if (
+                !user ||
+                !user.userId
+            ) {
+                return;
+            }
 
 
-        /* -----------------------------------------
-           USER INFO
-        ----------------------------------------- */
+            /* -----------------------------------------
+               USER ITEM
+            ----------------------------------------- */
 
-        const info =
-            document.createElement("div");
+            const item =
+                document.createElement(
+                    "div"
+                );
 
-        info.className =
-            "online-user-info";
-
-
-        const avatar =
-            document.createElement("div");
-
-        avatar.className =
-            "online-user-avatar";
-
-        avatar.textContent =
-            getInitial(user.name);
+            item.className =
+                "online-user-item";
 
 
-        const details =
-            document.createElement("div");
+            /* -----------------------------------------
+               USER INFO
+            ----------------------------------------- */
+
+            const info =
+                document.createElement(
+                    "div"
+                );
+
+            info.className =
+                "online-user-info";
 
 
-        const userName =
-            document.createElement("div");
+            const avatar =
+                document.createElement(
+                    "div"
+                );
 
-        userName.className =
-            "online-user-name";
+            avatar.className =
+                "online-user-avatar";
 
-        userName.textContent =
-            user.name || "Unknown User";
-
-
-        const status =
-            document.createElement("div");
-
-        status.className =
-            "online-user-status";
+            avatar.textContent =
+                getInitial(
+                    user.name
+                );
 
 
-        const dot =
-            document.createElement("span");
-
-        dot.className =
-            "online-status-dot";
-
-
-        const statusText =
-            document.createElement("span");
+            const details =
+                document.createElement(
+                    "div"
+                );
 
 
-        const isBusy =
-            user.status === "busy";
+            const userName =
+                document.createElement(
+                    "div"
+                );
+
+            userName.className =
+                "online-user-name";
+
+            userName.textContent =
+                user.name ||
+                "Unknown User";
 
 
-        if (isBusy) {
+            const status =
+                document.createElement(
+                    "div"
+                );
 
-            status.classList.add("busy");
-
-            dot.classList.add("busy");
-
-            statusText.textContent =
-                "Busy";
-
-        } else {
-
-            statusText.textContent =
-                "Online";
-        }
+            status.className =
+                "online-user-status";
 
 
-        status.appendChild(dot);
-        status.appendChild(statusText);
+            const dot =
+                document.createElement(
+                    "span"
+                );
+
+            dot.className =
+                "online-status-dot";
 
 
-        details.appendChild(userName);
-        details.appendChild(status);
+            const statusText =
+                document.createElement(
+                    "span"
+                );
 
 
-        info.appendChild(avatar);
-        info.appendChild(details);
+            const isBusy =
+                String(
+                    user.status || ""
+                ).toLowerCase() ===
+                "busy";
 
 
-        /* -----------------------------------------
-           CALL BUTTON
-        ----------------------------------------- */
+            if (isBusy) {
 
-        const callButton =
-            document.createElement("button");
+                status.classList.add(
+                    "busy"
+                );
 
-        callButton.type = "button";
+                dot.classList.add(
+                    "busy"
+                );
 
-        callButton.className =
-            "online-call-button";
+                statusText.textContent =
+                    "Busy";
+
+            } else {
+
+                statusText.textContent =
+                    "Online";
+            }
 
 
-        if (isBusy) {
+            status.appendChild(
+                dot
+            );
+
+            status.appendChild(
+                statusText
+            );
+
+
+            details.appendChild(
+                userName
+            );
+
+            details.appendChild(
+                status
+            );
+
+
+            info.appendChild(
+                avatar
+            );
+
+            info.appendChild(
+                details
+            );
+
+
+            /* -----------------------------------------
+               CALL BUTTON
+            ----------------------------------------- */
+
+            const callButton =
+                document.createElement(
+                    "button"
+                );
+
+
+            callButton.type =
+                "button";
+
+
+            callButton.className =
+                "online-call-button";
+
 
             callButton.textContent =
-                "Busy";
+                isBusy
+                    ? "Busy"
+                    : "Call";
 
-            callButton.disabled = true;
 
-        } else {
+            callButton.disabled =
+                isBusy;
 
-            callButton.textContent =
-                "Call";
 
-            callButton.disabled = false;
+            if (!isBusy) {
 
-            callButton.addEventListener(
-                "click",
-                () => {
+                callButton.onclick =
+                    function (event) {
 
-                    callUser(
-                        user.userId,
-                        user.name || "User"
-                    );
-                }
+                        event.preventDefault();
+                        event.stopPropagation();
+
+
+                        console.log(
+                            "CALL BUTTON CLICKED"
+                        );
+
+
+                        console.log(
+                            "Receiver:",
+                            user.name
+                        );
+
+
+                        callUser(
+                            String(
+                                user.userId
+                            ),
+                            String(
+                                user.name ||
+                                "User"
+                            )
+                        );
+                    };
+            }
+
+
+            item.appendChild(
+                info
+            );
+
+            item.appendChild(
+                callButton
+            );
+
+
+            onlineUsers.appendChild(
+                item
             );
         }
-
-
-        item.appendChild(info);
-        item.appendChild(callButton);
-
-        onlineUsers.appendChild(item);
-    });
+    );
 }
 
 
@@ -573,39 +751,50 @@ function renderOnlineUsers(users) {
 async function refreshOnlineUsers() {
 
     await registerPresence();
+
     await pollOnlineUsers();
 }
+
 
 window.refreshOnlineUsers =
     refreshOnlineUsers;
 
 
 /* ============================================================
-   UPDATE MY NAME / PRESENCE
+   UPDATE MY PRESENCE
 ============================================================ */
 
 async function updateMyPresence() {
 
-    const name = getMyName();
+    const name =
+        getMyName();
+
 
     if (!name) {
 
         try {
+
             localStorage.removeItem(
                 "video_call_name"
             );
+
         } catch (_) {}
+
 
         renderOnlineUsers([]);
 
-        setConnectionStatus("Offline");
+        setConnectionStatus(
+            "Offline"
+        );
 
         return;
     }
 
+
     saveMyName(name);
 
     await registerPresence();
+
     await pollOnlineUsers();
 }
 
@@ -624,6 +813,7 @@ if (nameInput) {
                 nameUpdateTimer
             );
 
+
             nameUpdateTimer =
                 setTimeout(
                     () => {
@@ -638,7 +828,6 @@ if (nameInput) {
     nameInput.addEventListener(
         "change",
         () => {
-
             updateMyPresence();
         }
     );
@@ -652,12 +841,15 @@ if (nameInput) {
 function startPresence() {
 
     if (presenceTimer) {
+
         clearInterval(
             presenceTimer
         );
     }
 
+
     if (onlineUsersTimer) {
+
         clearInterval(
             onlineUsersTimer
         );
@@ -665,26 +857,27 @@ function startPresence() {
 
 
     registerPresence();
+
     pollOnlineUsers();
 
-
-    /* Heartbeat every 10 seconds */
 
     presenceTimer =
         setInterval(
             () => {
+
                 registerPresence();
+
             },
             10000
         );
 
 
-    /* Refresh user list every 5 seconds */
-
     onlineUsersTimer =
         setInterval(
             () => {
+
                 pollOnlineUsers();
+
             },
             5000
         );
@@ -699,7 +892,8 @@ function setOffline() {
 
     const payload =
         JSON.stringify({
-            userId: myUserId
+            userId:
+                myUserId
         });
 
 
@@ -718,11 +912,13 @@ function setOffline() {
                     }
                 );
 
+
             navigator.sendBeacon(
                 API +
                 "/presence/offline",
                 blob
             );
+
 
             return;
         }
@@ -736,13 +932,19 @@ function setOffline() {
             API +
             "/presence/offline",
             {
-                method: "POST",
+                method:
+                    "POST",
+
                 headers: {
                     "Content-Type":
                         "application/json"
                 },
-                body: payload,
-                keepalive: true
+
+                body:
+                    payload,
+
+                keepalive:
+                    true
             }
         );
 
@@ -766,9 +968,11 @@ async function pollIncomingCalls() {
         return;
     }
 
+
     if (currentCallId) {
         return;
     }
+
 
     try {
 
@@ -776,31 +980,34 @@ async function pollIncomingCalls() {
             await apiRequest(
                 "/call/poll",
                 {
-                    userId: myUserId
+                    userId:
+                        myUserId
                 }
             );
 
 
         const calls =
-            Array.isArray(data.calls)
+            Array.isArray(
+                data.calls
+            )
                 ? data.calls
                 : [];
 
 
-        if (calls.length > 0) {
-
-            const call =
-                calls.find(
-                    item =>
-                        item &&
-                        item.status ===
-                            "ringing"
-                );
+        const call =
+            calls.find(
+                item =>
+                    item &&
+                    item.status ===
+                    "ringing"
+            );
 
 
-            if (call) {
-                showIncomingCall(call);
-            }
+        if (call) {
+
+            showIncomingCall(
+                call
+            );
         }
 
     } catch (error) {
@@ -833,7 +1040,9 @@ function startIncomingCallPolling() {
     incomingCallTimer =
         setInterval(
             () => {
+
                 pollIncomingCalls();
+
             },
             1500
         );
@@ -849,6 +1058,7 @@ function showIncomingCall(call) {
     if (!call) {
         return;
     }
+
 
     incomingCall =
         call;
@@ -914,6 +1124,7 @@ async function acceptIncomingCall() {
             true;
     }
 
+
     if (declineCallButton) {
         declineCallButton.disabled =
             true;
@@ -935,29 +1146,45 @@ async function acceptIncomingCall() {
             );
 
 
+        const acceptedCall =
+            data.call ||
+            call;
+
+
         hideIncomingCall();
 
 
         currentCallId =
+            acceptedCall.callId ||
             call.callId;
+
 
         currentCallRole =
             "receiver";
 
+
         currentRoom =
-            data.room ||
+            acceptedCall.room ||
             call.room ||
             "";
 
+
         currentName =
             getMyName();
+
+
+        if (!currentRoom) {
+
+            throw new Error(
+                "Call room is missing."
+            );
+        }
 
 
         await startJaaSCall(
             currentName,
             currentRoom
         );
-
 
     } catch (error) {
 
@@ -966,7 +1193,9 @@ async function acceptIncomingCall() {
             error
         );
 
+
         hideIncomingCall();
+
 
         alert(
             error.message ||
@@ -980,6 +1209,7 @@ async function acceptIncomingCall() {
                 false;
         }
 
+
         if (declineCallButton) {
             declineCallButton.disabled =
                 false;
@@ -989,7 +1219,7 @@ async function acceptIncomingCall() {
 
 
 /* ============================================================
-   DECLINE INCOMING CALL
+   DECLINE
 ============================================================ */
 
 async function declineIncomingCall() {
@@ -1007,6 +1237,7 @@ async function declineIncomingCall() {
         acceptCallButton.disabled =
             true;
     }
+
 
     if (declineCallButton) {
         declineCallButton.disabled =
@@ -1038,15 +1269,20 @@ async function declineIncomingCall() {
 
         hideIncomingCall();
 
+
         if (acceptCallButton) {
             acceptCallButton.disabled =
                 false;
         }
 
+
         if (declineCallButton) {
             declineCallButton.disabled =
                 false;
         }
+
+
+        pollOnlineUsers();
     }
 }
 
@@ -1070,13 +1306,20 @@ if (declineCallButton) {
 
 
 /* ============================================================
-   OUTGOING CALL
+   CALL USER
 ============================================================ */
 
 async function callUser(
     receiverId,
     receiverName
 ) {
+
+    console.log(
+        "callUser()",
+        receiverId,
+        receiverName
+    );
+
 
     const callerName =
         getMyName();
@@ -1088,9 +1331,11 @@ async function callUser(
             "Please enter your name first."
         );
 
+
         if (nameInput) {
             nameInput.focus();
         }
+
 
         return;
     }
@@ -1101,6 +1346,7 @@ async function callUser(
         alert(
             "This user is unavailable."
         );
+
 
         return;
     }
@@ -1115,6 +1361,7 @@ async function callUser(
             "You cannot call yourself."
         );
 
+
         return;
     }
 
@@ -1125,6 +1372,7 @@ async function callUser(
             "You are already in a call."
         );
 
+
         return;
     }
 
@@ -1132,8 +1380,10 @@ async function callUser(
     currentName =
         callerName;
 
+
     currentReceiverId =
         receiverId;
+
 
     currentReceiverName =
         receiverName ||
@@ -1145,6 +1395,11 @@ async function callUser(
 
 
     try {
+
+        setConnectionStatus(
+            "Calling..."
+        );
+
 
         const data =
             await apiRequest(
@@ -1168,15 +1423,38 @@ async function callUser(
             );
 
 
+        /* ==================================================
+           IMPORTANT:
+           Worker returns { ok, call }
+        ================================================== */
+
+        const createdCall =
+            data.call ||
+            data;
+
+
         currentCallId =
-            data.callId;
+            createdCall.callId ||
+            data.callId ||
+            "";
+
 
         currentCallRole =
             "caller";
 
+
         currentRoom =
+            createdCall.room ||
             data.room ||
             room;
+
+
+        if (!currentCallId) {
+
+            throw new Error(
+                "Server did not return a Call ID."
+            );
+        }
 
 
         showCallingScreen(
@@ -1193,6 +1471,13 @@ async function callUser(
             "Create call error:",
             error
         );
+
+
+        hideCallingScreen();
+
+
+        resetCallState();
+
 
         alert(
             error.message ||
@@ -1264,7 +1549,9 @@ function startOutgoingCallStatusPolling() {
     callStatusTimer =
         setInterval(
             () => {
+
                 checkOutgoingCallStatus();
+
             },
             1200
         );
@@ -1311,7 +1598,13 @@ async function checkOutgoingCallStatus() {
             );
 
 
+        const call =
+            data.call ||
+            data;
+
+
         const status =
+            call.status ||
             data.status;
 
 
@@ -1348,6 +1641,7 @@ async function checkOutgoingCallStatus() {
 
             hideCallingScreen();
 
+
             alert(
                 (
                     currentReceiverName ||
@@ -1356,7 +1650,12 @@ async function checkOutgoingCallStatus() {
                 " declined the call."
             );
 
+
             resetCallState();
+
+
+            await pollOnlineUsers();
+
 
             return;
         }
@@ -1373,6 +1672,8 @@ async function checkOutgoingCallStatus() {
 
             resetCallState();
 
+            await pollOnlineUsers();
+
             return;
         }
 
@@ -1386,11 +1687,16 @@ async function checkOutgoingCallStatus() {
 
             hideCallingScreen();
 
+
             alert(
                 "The call expired."
             );
 
+
             resetCallState();
+
+
+            await pollOnlineUsers();
 
             return;
         }
@@ -1461,17 +1767,24 @@ async function cancelOutgoingCall() {
    LOAD JAAS API
 ============================================================ */
 
-function loadJaaSApi(appId) {
+function loadJaaSApi(
+    appId
+) {
 
     return new Promise(
-        (resolve, reject) => {
+        (
+            resolve,
+            reject
+        ) => {
 
             if (
                 window.JitsiMeetExternalAPI
             ) {
+
                 resolve(
                     window.JitsiMeetExternalAPI
                 );
+
                 return;
             }
 
@@ -1500,10 +1813,13 @@ function loadJaaSApi(appId) {
                     if (
                         window.JitsiMeetExternalAPI
                     ) {
+
                         resolve(
                             window.JitsiMeetExternalAPI
                         );
+
                     } else {
+
                         reject(
                             new Error(
                                 "JaaS API failed to load."
@@ -1547,6 +1863,7 @@ async function startJaaSCall(
             "Call room is missing."
         );
 
+
         resetCallState();
 
         return;
@@ -1560,6 +1877,7 @@ async function startJaaSCall(
                 true;
         }
 
+
         if (createButton) {
             createButton.disabled =
                 true;
@@ -1571,17 +1889,21 @@ async function startJaaSCall(
         );
 
 
-        /* -----------------------------------------
-           Get JWT
-        ----------------------------------------- */
+        /* ==================================================
+           IMPORTANT:
+           Worker requires name + room
+        ================================================== */
 
         const tokenData =
             await apiRequest(
                 "/token",
                 {
-                    userName:
+                    name:
                         displayName ||
-                        "Guest"
+                        "Guest",
+
+                    room:
+                        room
                 }
             );
 
@@ -1610,20 +1932,17 @@ async function startJaaSCall(
         }
 
 
-        /* -----------------------------------------
-           Load JaaS external API
-        ----------------------------------------- */
-
         await loadJaaSApi(
             appId
         );
 
 
-        /* -----------------------------------------
-           Show call screen
-        ----------------------------------------- */
+        /* ==================================================
+           SHOW CALL SCREEN
+        ================================================== */
 
         if (homeScreen) {
+
             homeScreen.style.display =
                 "none";
         }
@@ -1653,9 +1972,9 @@ async function startJaaSCall(
         }
 
 
-        /* -----------------------------------------
-           Dispose previous Jitsi
-        ----------------------------------------- */
+        /* ==================================================
+           DISPOSE OLD JITSI
+        ================================================== */
 
         if (jitsiApi) {
 
@@ -1668,6 +1987,7 @@ async function startJaaSCall(
 
             } catch (_) {}
 
+
             jitsiApi =
                 null;
 
@@ -1676,9 +1996,9 @@ async function startJaaSCall(
         }
 
 
-        /* -----------------------------------------
-           JaaS room
-        ----------------------------------------- */
+        /* ==================================================
+           JAAS ROOM
+        ================================================== */
 
         const roomName =
             appId +
@@ -1705,6 +2025,7 @@ async function startJaaSCall(
 
 
             userInfo: {
+
                 displayName:
                     displayName ||
                     "Guest"
@@ -1742,9 +2063,9 @@ async function startJaaSCall(
             );
 
 
-        /* -----------------------------------------
-           JaaS Events
-        ----------------------------------------- */
+        /* ==================================================
+           JAAS EVENTS
+        ================================================== */
 
         jitsiApi.addEventListener(
             "videoConferenceJoined",
@@ -1761,9 +2082,7 @@ async function startJaaSCall(
             "videoConferenceLeft",
             () => {
 
-                if (
-                    !leavingJitsi
-                ) {
+                if (!leavingJitsi) {
 
                     leaveCall();
                 }
@@ -1775,9 +2094,7 @@ async function startJaaSCall(
             "readyToClose",
             () => {
 
-                if (
-                    !leavingJitsi
-                ) {
+                if (!leavingJitsi) {
 
                     leaveCall();
                 }
@@ -1831,6 +2148,7 @@ async function startJaaSCall(
             joinButton.disabled =
                 false;
         }
+
 
         if (createButton) {
             createButton.disabled =
@@ -1903,6 +2221,7 @@ async function leaveCall() {
 
 
     await registerPresence();
+
     await pollOnlineUsers();
 }
 
@@ -1970,6 +2289,7 @@ function resetCallState() {
 
     hideIncomingCall();
 
+
     setConnectionStatus(
         getMyName()
             ? "Online"
@@ -1979,7 +2299,7 @@ function resetCallState() {
 
 
 /* ============================================================
-   JOIN EXISTING ROOM
+   JOIN ROOM
 ============================================================ */
 
 async function joinRoom() {
@@ -1994,9 +2314,11 @@ async function joinRoom() {
             "Please enter your name first."
         );
 
+
         if (nameInput) {
             nameInput.focus();
         }
+
 
         return;
     }
@@ -2016,9 +2338,11 @@ async function joinRoom() {
             "Please enter a room code."
         );
 
+
         if (roomInput) {
             roomInput.focus();
         }
+
 
         return;
     }
@@ -2026,11 +2350,14 @@ async function joinRoom() {
 
     saveMyName(name);
 
+
     currentName =
         name;
 
+
     currentRoom =
         room;
+
 
     currentCallRole =
         "direct";
@@ -2068,9 +2395,11 @@ async function createRoom() {
             "Please enter your name first."
         );
 
+
         if (nameInput) {
             nameInput.focus();
         }
+
 
         return;
     }
@@ -2081,6 +2410,7 @@ async function createRoom() {
 
 
     if (roomInput) {
+
         roomInput.value =
             room;
     }
@@ -2088,11 +2418,14 @@ async function createRoom() {
 
     saveMyName(name);
 
+
     currentName =
         name;
 
+
     currentRoom =
         room;
+
 
     currentCallRole =
         "direct";
@@ -2115,7 +2448,7 @@ if (createButton) {
 
 
 /* ============================================================
-   COPY ROOM CODE
+   COPY ROOM
 ============================================================ */
 
 async function copyRoomCode() {
@@ -2147,27 +2480,37 @@ async function copyRoomCode() {
                 "textarea"
             );
 
+
         textarea.value =
             room;
+
 
         textarea.style.position =
             "fixed";
 
+
         textarea.style.opacity =
             "0";
+
 
         document.body.appendChild(
             textarea
         );
 
+
         textarea.focus();
+
         textarea.select();
 
+
         try {
+
             document.execCommand(
                 "copy"
             );
+
         } catch (_) {}
+
 
         textarea.remove();
     }
@@ -2177,6 +2520,7 @@ async function copyRoomCode() {
 
         const oldText =
             copyButton.textContent;
+
 
         copyButton.textContent =
             "Copied!";
@@ -2222,9 +2566,11 @@ if (backButton) {
                         "Leave this call?"
                     );
 
+
                 if (!leave) {
                     return;
                 }
+
 
                 await leaveCall();
 
@@ -2260,7 +2606,7 @@ if (backButton) {
 
 
 /* ============================================================
-   REFRESH USERS BUTTON
+   REFRESH USERS
 ============================================================ */
 
 if (refreshUsersButton) {
@@ -2295,7 +2641,7 @@ if (refreshUsersButton) {
 
 
 /* ============================================================
-   ROOM INPUT ENTER
+   ROOM ENTER
 ============================================================ */
 
 if (roomInput) {
@@ -2308,6 +2654,7 @@ if (roomInput) {
                 event.key ===
                 "Enter"
             ) {
+
                 event.preventDefault();
 
                 joinRoom();
@@ -2329,8 +2676,7 @@ startIncomingCallPolling();
 
 
 /* ============================================================
-   DEBUG HELPERS
-   Internal only — User ID is NOT shown in UI.
+   DEBUG
 ============================================================ */
 
 window.getMyUserId =
