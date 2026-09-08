@@ -103,22 +103,31 @@ let leavingJitsi = false;
 
 let nameUpdateTimer = null;
 
+let presenceBusy = false;
+let usersPollBusy = false;
+
 
 /* ============================================================
    INTERNAL USER ID
-   User never enters or sees this.
 ============================================================ */
 
 function getUserId() {
 
-    let userId = null;
+    let userId = "";
 
     try {
+
         userId =
             localStorage.getItem(
                 "video_call_user_id"
-            );
+            ) || "";
+
     } catch (_) {}
+
+
+    userId =
+        String(userId).trim();
+
 
     if (!userId) {
 
@@ -141,6 +150,7 @@ function getUserId() {
                     .slice(2, 12);
         }
 
+
         try {
 
             localStorage.setItem(
@@ -151,8 +161,10 @@ function getUserId() {
         } catch (_) {}
     }
 
+
     return userId;
 }
+
 
 const myUserId = getUserId();
 
@@ -163,11 +175,15 @@ const myUserId = getUserId();
 
 function saveMyName(name) {
 
+    const value =
+        String(name || "").trim();
+
+
     try {
 
         localStorage.setItem(
             "video_call_name",
-            String(name || "").trim()
+            value
         );
 
     } catch (_) {}
@@ -181,7 +197,8 @@ function loadMyName() {
         const saved =
             localStorage.getItem(
                 "video_call_name"
-            );
+            ) || "";
+
 
         if (
             saved &&
@@ -204,6 +221,7 @@ function loadMyName() {
 function setConnectionStatus(text) {
 
     if (connectionStatus) {
+
         connectionStatus.textContent =
             text;
     }
@@ -222,10 +240,15 @@ async function apiRequest(
 
     const fetchOptions = {
 
-        method: "POST",
+        method:
+            "POST",
 
         headers: {
+
             "Content-Type":
+                "application/json",
+
+            "Accept":
                 "application/json"
         },
 
@@ -245,6 +268,7 @@ async function apiRequest(
 
     let response;
 
+
     try {
 
         response =
@@ -255,6 +279,12 @@ async function apiRequest(
 
     } catch (error) {
 
+        console.error(
+            "FETCH ERROR:",
+            path,
+            error
+        );
+
         throw new Error(
             "Network connection failed."
         );
@@ -262,6 +292,7 @@ async function apiRequest(
 
 
     let data = {};
+
 
     try {
 
@@ -273,12 +304,18 @@ async function apiRequest(
 
     if (!response.ok) {
 
-        throw new Error(
-
+        const message =
             data.error ||
             data.message ||
-            "Request failed."
+            (
+                "Request failed (" +
+                response.status +
+                ")."
+            );
 
+
+        throw new Error(
+            message
         );
     }
 
@@ -300,6 +337,7 @@ function generateRoom() {
 
     let result = "";
 
+
     for (
         let i = 0;
         i < 10;
@@ -315,6 +353,7 @@ function generateRoom() {
             );
     }
 
+
     return result;
 }
 
@@ -327,7 +366,10 @@ function cleanRoom(value) {
             /[^a-zA-Z0-9_-]/g,
             ""
         )
-        .slice(0, 40);
+        .slice(
+            0,
+            40
+        );
 }
 
 
@@ -350,9 +392,12 @@ function getInitial(name) {
     const value =
         String(name || "").trim();
 
+
     if (!value) {
+
         return "?";
     }
+
 
     return value
         .charAt(0)
@@ -369,6 +414,7 @@ async function registerPresence() {
     const name =
         getMyName();
 
+
     if (!name) {
 
         setConnectionStatus(
@@ -377,30 +423,56 @@ async function registerPresence() {
 
         renderOnlineUsers([]);
 
-        return;
+        return false;
     }
 
 
     saveMyName(name);
 
 
+    if (presenceBusy) {
+
+        return true;
+    }
+
+
+    presenceBusy =
+        true;
+
+
     try {
 
-        await apiRequest(
-            "/presence/online",
-            {
-                userId:
-                    myUserId,
+        const data =
+            await apiRequest(
+                "/presence/online",
+                {
+                    userId:
+                        myUserId,
 
-                name:
-                    name
-            }
-        );
+                    name:
+                        name
+                }
+            );
 
 
-        setConnectionStatus(
-            "Online"
-        );
+        if (
+            data &&
+            data.ok
+        ) {
+
+            setConnectionStatus(
+                "Online"
+            );
+
+        } else {
+
+            setConnectionStatus(
+                "Reconnecting..."
+            );
+        }
+
+
+        return true;
 
     } catch (error) {
 
@@ -409,9 +481,18 @@ async function registerPresence() {
             error
         );
 
+
         setConnectionStatus(
             "Reconnecting..."
         );
+
+
+        return false;
+
+    } finally {
+
+        presenceBusy =
+            false;
     }
 }
 
@@ -425,12 +506,23 @@ async function pollOnlineUsers() {
     const name =
         getMyName();
 
+
     if (!name) {
 
         renderOnlineUsers([]);
 
         return;
     }
+
+
+    if (usersPollBusy) {
+
+        return;
+    }
+
+
+    usersPollBusy =
+        true;
 
 
     try {
@@ -445,13 +537,40 @@ async function pollOnlineUsers() {
             );
 
 
-        renderOnlineUsers(
+        let users =
             Array.isArray(
                 data.users
             )
                 ? data.users
-                : []
+                : [];
+
+
+        /*
+         * Safety:
+         * Never display our own account even if
+         * backend accidentally returns it.
+         */
+
+        users =
+            users.filter(
+                user => {
+
+                    if (!user) {
+                        return false;
+                    }
+
+
+                    return String(
+                        user.userId || ""
+                    ) !== myUserId;
+                }
+            );
+
+
+        renderOnlineUsers(
+            users
         );
+
 
     } catch (error) {
 
@@ -459,6 +578,11 @@ async function pollOnlineUsers() {
             "Online users error:",
             error
         );
+
+    } finally {
+
+        usersPollBusy =
+            false;
     }
 }
 
@@ -479,19 +603,33 @@ function renderOnlineUsers(users) {
     }
 
 
+    /*
+     * Keep the empty message separate.
+     * Do not move the original element around unnecessarily.
+     */
+
     onlineUsers.innerHTML = "";
 
 
     const list =
         Array.isArray(users)
-            ? users
+            ? users.filter(
+                user =>
+                    user &&
+                    user.userId &&
+                    String(
+                        user.userId
+                    ) !== myUserId
+              )
             : [];
 
 
     if (onlineCount) {
 
         onlineCount.textContent =
-            String(list.length);
+            String(
+                list.length
+            );
     }
 
 
@@ -521,16 +659,29 @@ function renderOnlineUsers(users) {
     list.forEach(
         user => {
 
-            if (
-                !user ||
-                !user.userId
-            ) {
-                return;
-            }
+            const userId =
+                String(
+                    user.userId
+                );
+
+
+            const userName =
+                String(
+                    user.name ||
+                    "User"
+                );
+
+
+            const isBusy =
+                String(
+                    user.status ||
+                    "online"
+                ).toLowerCase() ===
+                "busy";
 
 
             /* -----------------------------------------
-               USER ITEM
+               ITEM
             ----------------------------------------- */
 
             const item =
@@ -538,18 +689,24 @@ function renderOnlineUsers(users) {
                     "div"
                 );
 
+
             item.className =
                 "online-user-item";
 
 
+            item.dataset.userId =
+                userId;
+
+
             /* -----------------------------------------
-               USER INFO
+               INFO
             ----------------------------------------- */
 
             const info =
                 document.createElement(
                     "div"
                 );
+
 
             info.className =
                 "online-user-info";
@@ -560,12 +717,14 @@ function renderOnlineUsers(users) {
                     "div"
                 );
 
+
             avatar.className =
                 "online-user-avatar";
 
+
             avatar.textContent =
                 getInitial(
-                    user.name
+                    userName
                 );
 
 
@@ -575,23 +734,25 @@ function renderOnlineUsers(users) {
                 );
 
 
-            const userName =
+            const userNameElement =
                 document.createElement(
                     "div"
                 );
 
-            userName.className =
+
+            userNameElement.className =
                 "online-user-name";
 
-            userName.textContent =
-                user.name ||
-                "Unknown User";
+
+            userNameElement.textContent =
+                userName;
 
 
             const status =
                 document.createElement(
                     "div"
                 );
+
 
             status.className =
                 "online-user-status";
@@ -602,6 +763,7 @@ function renderOnlineUsers(users) {
                     "span"
                 );
 
+
             dot.className =
                 "online-status-dot";
 
@@ -610,13 +772,6 @@ function renderOnlineUsers(users) {
                 document.createElement(
                     "span"
                 );
-
-
-            const isBusy =
-                String(
-                    user.status || ""
-                ).toLowerCase() ===
-                "busy";
 
 
             if (isBusy) {
@@ -649,7 +804,7 @@ function renderOnlineUsers(users) {
 
 
             details.appendChild(
-                userName
+                userNameElement
             );
 
             details.appendChild(
@@ -684,52 +839,49 @@ function renderOnlineUsers(users) {
                 "online-call-button";
 
 
+            callButton.dataset.userId =
+                userId;
+
+
+            callButton.dataset.userName =
+                userName;
+
+
             callButton.textContent =
                 isBusy
                     ? "Busy"
                     : "Call";
 
 
+            /*
+             * IMPORTANT:
+             * Do not leave a clickable button disabled
+             * because CSS/browser combinations can make
+             * the UI confusing.
+             */
+
             callButton.disabled =
-                isBusy;
+                false;
 
 
-            if (!isBusy) {
+            if (isBusy) {
 
-                callButton.onclick =
-                    function (event) {
+                callButton.classList.add(
+                    "busy"
+                );
 
-                        event.preventDefault();
-                        event.stopPropagation();
+            } else {
 
-
-                        console.log(
-                            "CALL BUTTON CLICKED"
-                        );
-
-
-                        console.log(
-                            "Receiver:",
-                            user.name
-                        );
-
-
-                        callUser(
-                            String(
-                                user.userId
-                            ),
-                            String(
-                                user.name ||
-                                "User"
-                            )
-                        );
-                    };
+                callButton.classList.remove(
+                    "busy"
+                );
             }
 
 
             item.appendChild(
                 info
             );
+
 
             item.appendChild(
                 callButton
@@ -738,6 +890,95 @@ function renderOnlineUsers(users) {
 
             onlineUsers.appendChild(
                 item
+            );
+        }
+    );
+}
+
+
+/* ============================================================
+   CALL BUTTON EVENT DELEGATION
+   This is the important fix.
+============================================================ */
+
+if (onlineUsers) {
+
+    onlineUsers.addEventListener(
+        "click",
+        event => {
+
+            const button =
+                event.target.closest(
+                    ".online-call-button"
+                );
+
+
+            if (!button) {
+                return;
+            }
+
+
+            event.preventDefault();
+            event.stopPropagation();
+
+
+            const receiverId =
+                String(
+                    button.dataset.userId ||
+                    ""
+                ).trim();
+
+
+            const receiverName =
+                String(
+                    button.dataset.userName ||
+                    "User"
+                ).trim();
+
+
+            console.log(
+                "CALL BUTTON CLICKED"
+            );
+
+
+            console.log(
+                "Receiver ID:",
+                receiverId
+            );
+
+
+            console.log(
+                "Receiver Name:",
+                receiverName
+            );
+
+
+            if (!receiverId) {
+
+                alert(
+                    "This user is unavailable."
+                );
+
+                return;
+            }
+
+
+            if (
+                receiverId ===
+                myUserId
+            ) {
+
+                alert(
+                    "You cannot call yourself."
+                );
+
+                return;
+            }
+
+
+            callUser(
+                receiverId,
+                receiverName
             );
         }
     );
@@ -783,15 +1024,18 @@ async function updateMyPresence() {
 
         renderOnlineUsers([]);
 
+
         setConnectionStatus(
             "Offline"
         );
+
 
         return;
     }
 
 
     saveMyName(name);
+
 
     await registerPresence();
 
@@ -817,9 +1061,11 @@ if (nameInput) {
             nameUpdateTimer =
                 setTimeout(
                     () => {
+
                         updateMyPresence();
+
                     },
-                    400
+                    500
                 );
         }
     );
@@ -828,6 +1074,16 @@ if (nameInput) {
     nameInput.addEventListener(
         "change",
         () => {
+
+            updateMyPresence();
+        }
+    );
+
+
+    nameInput.addEventListener(
+        "blur",
+        () => {
+
             updateMyPresence();
         }
     );
@@ -856,30 +1112,50 @@ function startPresence() {
     }
 
 
-    registerPresence();
+    /*
+     * First registration immediately.
+     */
 
-    pollOnlineUsers();
-
-
-    presenceTimer =
-        setInterval(
-            () => {
-
-                registerPresence();
-
-            },
-            10000
+    registerPresence()
+        .then(
+            () => pollOnlineUsers()
+        )
+        .catch(
+            error => console.error(
+                "Initial presence error:",
+                error
+            )
         );
 
 
-    onlineUsersTimer =
-        setInterval(
-            () => {
+    /*
+     * Heartbeat.
+     * 8 seconds is safely below the 30 second timeout.
+     */
 
-                pollOnlineUsers();
+    presenceTimer =
+        setInterval(
+            async () => {
+
+                await registerPresence();
 
             },
-            5000
+            8000
+        );
+
+
+    /*
+     * User list refresh.
+     */
+
+    onlineUsersTimer =
+        setInterval(
+            async () => {
+
+                await pollOnlineUsers();
+
+            },
+            2500
         );
 }
 
@@ -953,6 +1229,12 @@ function setOffline() {
 
 
 window.addEventListener(
+    "pagehide",
+    setOffline
+);
+
+
+window.addEventListener(
     "beforeunload",
     setOffline
 );
@@ -998,8 +1280,10 @@ async function pollIncomingCalls() {
             calls.find(
                 item =>
                     item &&
+                    item.receiverId ===
+                        myUserId &&
                     item.status ===
-                    "ringing"
+                        "ringing"
             );
 
 
@@ -1044,7 +1328,7 @@ function startIncomingCallPolling() {
                 pollIncomingCalls();
 
             },
-            1500
+            1200
         );
 }
 
@@ -1062,6 +1346,7 @@ function showIncomingCall(call) {
 
     incomingCall =
         call;
+
 
     incomingCallVisible =
         true;
@@ -1092,6 +1377,7 @@ function hideIncomingCall() {
     incomingCallVisible =
         false;
 
+
     incomingCall =
         null;
 
@@ -1120,12 +1406,14 @@ async function acceptIncomingCall() {
 
 
     if (acceptCallButton) {
+
         acceptCallButton.disabled =
             true;
     }
 
 
     if (declineCallButton) {
+
         declineCallButton.disabled =
             true;
     }
@@ -1205,16 +1493,27 @@ async function acceptIncomingCall() {
     } finally {
 
         if (acceptCallButton) {
+
             acceptCallButton.disabled =
                 false;
         }
 
 
         if (declineCallButton) {
+
             declineCallButton.disabled =
                 false;
         }
     }
+}
+
+
+if (acceptCallButton) {
+
+    acceptCallButton.addEventListener(
+        "click",
+        acceptIncomingCall
+    );
 }
 
 
@@ -1234,12 +1533,14 @@ async function declineIncomingCall() {
 
 
     if (acceptCallButton) {
+
         acceptCallButton.disabled =
             true;
     }
 
 
     if (declineCallButton) {
+
         declineCallButton.disabled =
             true;
     }
@@ -1271,28 +1572,21 @@ async function declineIncomingCall() {
 
 
         if (acceptCallButton) {
+
             acceptCallButton.disabled =
                 false;
         }
 
 
         if (declineCallButton) {
+
             declineCallButton.disabled =
                 false;
         }
 
 
-        pollOnlineUsers();
+        await pollOnlineUsers();
     }
-}
-
-
-if (acceptCallButton) {
-
-    acceptCallButton.addEventListener(
-        "click",
-        acceptIncomingCall
-    );
 }
 
 
@@ -1314,6 +1608,20 @@ async function callUser(
     receiverName
 ) {
 
+    receiverId =
+        String(
+            receiverId ||
+            ""
+        ).trim();
+
+
+    receiverName =
+        String(
+            receiverName ||
+            "User"
+        ).trim();
+
+
     console.log(
         "callUser()",
         receiverId,
@@ -1333,6 +1641,7 @@ async function callUser(
 
 
         if (nameInput) {
+
             nameInput.focus();
         }
 
@@ -1423,20 +1732,17 @@ async function callUser(
             );
 
 
-        /* ==================================================
-           IMPORTANT:
-           Worker returns { ok, call }
-        ================================================== */
-
         const createdCall =
             data.call ||
             data;
 
 
         currentCallId =
-            createdCall.callId ||
-            data.callId ||
-            "";
+            String(
+                createdCall.callId ||
+                data.callId ||
+                ""
+            );
 
 
         currentCallRole =
@@ -1457,6 +1763,12 @@ async function callUser(
         }
 
 
+        console.log(
+            "CALL CREATED:",
+            createdCall
+        );
+
+
         showCallingScreen(
             currentReceiverName
         );
@@ -1464,6 +1776,8 @@ async function callUser(
 
         startOutgoingCallStatusPolling();
 
+
+        await pollOnlineUsers();
 
     } catch (error) {
 
@@ -1553,7 +1867,7 @@ function startOutgoingCallStatusPolling() {
                 checkOutgoingCallStatus();
 
             },
-            1200
+            1000
         );
 }
 
@@ -1565,6 +1879,7 @@ function stopOutgoingCallStatusPolling() {
         clearInterval(
             callStatusTimer
         );
+
 
         callStatusTimer =
             null;
@@ -1608,12 +1923,19 @@ async function checkOutgoingCallStatus() {
             data.status;
 
 
+        console.log(
+            "CALL STATUS:",
+            status
+        );
+
+
         if (
             status ===
             "accepted"
         ) {
 
             stopOutgoingCallStatusPolling();
+
 
             hideCallingScreen();
 
@@ -1638,6 +1960,7 @@ async function checkOutgoingCallStatus() {
         ) {
 
             stopOutgoingCallStatusPolling();
+
 
             hideCallingScreen();
 
@@ -1668,11 +1991,15 @@ async function checkOutgoingCallStatus() {
 
             stopOutgoingCallStatusPolling();
 
+
             hideCallingScreen();
+
 
             resetCallState();
 
+
             await pollOnlineUsers();
+
 
             return;
         }
@@ -1684,6 +2011,7 @@ async function checkOutgoingCallStatus() {
         ) {
 
             stopOutgoingCallStatusPolling();
+
 
             hideCallingScreen();
 
@@ -1697,6 +2025,7 @@ async function checkOutgoingCallStatus() {
 
 
             await pollOnlineUsers();
+
 
             return;
         }
@@ -1756,9 +2085,11 @@ async function cancelOutgoingCall() {
 
         hideCallingScreen();
 
+
         resetCallState();
 
-        pollOnlineUsers();
+
+        await pollOnlineUsers();
     }
 }
 
@@ -1866,6 +2197,7 @@ async function startJaaSCall(
 
         resetCallState();
 
+
         return;
     }
 
@@ -1873,12 +2205,14 @@ async function startJaaSCall(
     try {
 
         if (joinButton) {
+
             joinButton.disabled =
                 true;
         }
 
 
         if (createButton) {
+
             createButton.disabled =
                 true;
         }
@@ -1888,11 +2222,6 @@ async function startJaaSCall(
             "Connecting..."
         );
 
-
-        /* ==================================================
-           IMPORTANT:
-           Worker requires name + room
-        ================================================== */
 
         const tokenData =
             await apiRequest(
@@ -1937,10 +2266,6 @@ async function startJaaSCall(
         );
 
 
-        /* ==================================================
-           SHOW CALL SCREEN
-        ================================================== */
-
         if (homeScreen) {
 
             homeScreen.style.display =
@@ -1953,6 +2278,7 @@ async function startJaaSCall(
             callScreen.classList.add(
                 "active"
             );
+
 
             callScreen.style.display =
                 "flex";
@@ -1971,10 +2297,6 @@ async function startJaaSCall(
             meet.innerHTML = "";
         }
 
-
-        /* ==================================================
-           DISPOSE OLD JITSI
-        ================================================== */
 
         if (jitsiApi) {
 
@@ -1995,10 +2317,6 @@ async function startJaaSCall(
                 false;
         }
 
-
-        /* ==================================================
-           JAAS ROOM
-        ================================================== */
 
         const roomName =
             appId +
@@ -2063,10 +2381,6 @@ async function startJaaSCall(
             );
 
 
-        /* ==================================================
-           JAAS EVENTS
-        ================================================== */
-
         jitsiApi.addEventListener(
             "videoConferenceJoined",
             () => {
@@ -2106,7 +2420,6 @@ async function startJaaSCall(
             "Connecting..."
         );
 
-
     } catch (error) {
 
         console.error(
@@ -2127,6 +2440,7 @@ async function startJaaSCall(
                 "active"
             );
 
+
             callScreen.style.display =
                 "none";
         }
@@ -2141,16 +2455,17 @@ async function startJaaSCall(
 
         resetCallState();
 
-
     } finally {
 
         if (joinButton) {
+
             joinButton.disabled =
                 false;
         }
 
 
         if (createButton) {
+
             createButton.disabled =
                 false;
         }
@@ -2205,6 +2520,7 @@ async function leaveCall() {
             "active"
         );
 
+
         callScreen.style.display =
             "none";
     }
@@ -2242,6 +2558,7 @@ function disposeJitsi() {
         leavingJitsi =
             true;
 
+
         jitsiApi.dispose();
 
     } catch (error) {
@@ -2255,6 +2572,7 @@ function disposeJitsi() {
 
         jitsiApi =
             null;
+
 
         leavingJitsi =
             false;
@@ -2271,21 +2589,28 @@ function resetCallState() {
     currentCallId =
         "";
 
+
     currentCallRole =
         "";
+
 
     currentRoom =
         "";
 
+
     currentReceiverId =
         "";
+
 
     currentReceiverName =
         "";
 
+
     stopOutgoingCallStatusPolling();
 
+
     hideCallingScreen();
+
 
     hideIncomingCall();
 
@@ -2316,6 +2641,7 @@ async function joinRoom() {
 
 
         if (nameInput) {
+
             nameInput.focus();
         }
 
@@ -2340,6 +2666,7 @@ async function joinRoom() {
 
 
         if (roomInput) {
+
             roomInput.focus();
         }
 
@@ -2397,6 +2724,7 @@ async function createRoom() {
 
 
         if (nameInput) {
+
             nameInput.focus();
         }
 
@@ -2587,6 +2915,7 @@ if (backButton) {
                     "active"
                 );
 
+
                 callScreen.style.display =
                     "none";
             }
@@ -2606,14 +2935,17 @@ if (backButton) {
 
 
 /* ============================================================
-   REFRESH USERS
+   REFRESH USERS BUTTON
 ============================================================ */
 
 if (refreshUsersButton) {
 
     refreshUsersButton.addEventListener(
         "click",
-        async () => {
+        async event => {
+
+            event.preventDefault();
+
 
             refreshUsersButton.disabled =
                 true;
@@ -2657,6 +2989,7 @@ if (roomInput) {
 
                 event.preventDefault();
 
+
                 joinRoom();
             }
         }
@@ -2681,11 +3014,64 @@ startIncomingCallPolling();
 
 window.getMyUserId =
     function () {
+
         return myUserId;
     };
 
 
 window.getMyName =
     function () {
+
         return getMyName();
     };
+
+
+window.testPresence =
+    async function () {
+
+        console.log(
+            "MY USER ID:",
+            myUserId
+        );
+
+
+        console.log(
+            "MY NAME:",
+            getMyName()
+        );
+
+
+        const online =
+            await registerPresence();
+
+
+        console.log(
+            "PRESENCE ONLINE:",
+            online
+        );
+
+
+        await pollOnlineUsers();
+
+
+        console.log(
+            "Presence test complete."
+        );
+    };
+
+
+console.log(
+    "Video Call app initialized."
+);
+
+
+console.log(
+    "My User ID:",
+    myUserId
+);
+
+
+console.log(
+    "My Name:",
+    getMyName()
+);
