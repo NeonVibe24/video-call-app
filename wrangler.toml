@@ -1,3 +1,23 @@
 name = "video-call-app"
+
 main = "worker.js"
+
 compatibility_date = "2026-09-08"
+
+
+# ============================================================
+# STATIC ASSETS
+# ============================================================
+
+[assets]
+
+# Your index.html, style.css and app.js
+# are currently in the project root.
+directory = "."
+
+# Allows worker.js to serve static files.
+binding = "ASSETS"
+
+# API requests go through worker.js.
+# Normal static files are served directly by Cloudflare.
+run_worker_first = ["/api/*"]
