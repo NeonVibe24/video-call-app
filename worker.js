@@ -272,7 +272,6 @@ async function createJWT(
         room:
             room,
 
-
         nbf:
             now - 5,
 
@@ -404,9 +403,9 @@ export default {
             );
 
 
-        /*
-         * OPTIONS
-         */
+        /* ======================================================
+           OPTIONS
+        ====================================================== */
 
         if (
             request.method ===
@@ -425,9 +424,9 @@ export default {
         }
 
 
-        /*
-         * Health check
-         */
+        /* ======================================================
+           HEALTH CHECK
+        ====================================================== */
 
         if (
             url.pathname ===
@@ -435,17 +434,21 @@ export default {
         ) {
 
             return json({
-                ok: true,
+
+                ok:
+                    true,
+
                 service:
                     "1v1 Video Call"
+
             });
 
         }
 
 
-        /*
-         * JWT endpoint
-         */
+        /* ======================================================
+           JWT ENDPOINT
+        ====================================================== */
 
         if (
             url.pathname ===
@@ -458,30 +461,44 @@ export default {
             ) {
 
                 return json(
+
                     {
                         error:
                             "Method not allowed."
                     },
+
                     405
+
                 );
 
             }
 
+
+            /* ==================================================
+               PRIVATE KEY CHECK
+            ================================================== */
 
             if (
                 !env.JAAS_PRIVATE_KEY
             ) {
 
                 return json(
+
                     {
                         error:
                             "JAAS_PRIVATE_KEY secret is not configured."
                     },
+
                     500
+
                 );
 
             }
 
+
+            /* ==================================================
+               JSON BODY
+            ================================================== */
 
             let body;
 
@@ -494,23 +511,37 @@ export default {
             } catch (_) {
 
                 return json(
+
                     {
                         error:
                             "Invalid JSON."
                     },
+
                     400
+
                 );
 
             }
 
+
+            /* ==================================================
+               NAME
+            ================================================== */
 
             const name =
                 String(
                     body.name || ""
                 )
                 .trim()
-                .slice(0, 40);
+                .slice(
+                    0,
+                    40
+                );
 
+
+            /* ==================================================
+               ROOM
+            ================================================== */
 
             const room =
                 String(
@@ -521,17 +552,27 @@ export default {
                     /[^a-zA-Z0-9_-]/g,
                     ""
                 )
-                .slice(0, 40);
+                .slice(
+                    0,
+                    40
+                );
 
+
+            /* ==================================================
+               VALIDATION
+            ================================================== */
 
             if (!name) {
 
                 return json(
+
                     {
                         error:
                             "Name is required."
                     },
+
                     400
+
                 );
 
             }
@@ -540,23 +581,34 @@ export default {
             if (!room) {
 
                 return json(
+
                     {
                         error:
                             "Room is required."
                     },
+
                     400
+
                 );
 
             }
 
 
+            /* ==================================================
+               CREATE TOKEN
+            ================================================== */
+
             try {
 
                 const token =
                     await createJWT(
+
                         env.JAAS_PRIVATE_KEY,
+
                         name,
+
                         room
+
                     );
 
 
@@ -579,11 +631,14 @@ export default {
 
 
                 return json(
+
                     {
                         error:
                             "JWT generation failed."
                     },
+
                     500
+
                 );
 
             }
@@ -591,16 +646,40 @@ export default {
         }
 
 
-        /*
-         * Frontend files are served by
-         * Cloudflare Pages / your static host.
-         */
+        /* ======================================================
+           STATIC ASSETS
+           
+           index.html
+           style.css
+           app.js
+           
+           are served from the assets directory.
+        ====================================================== */
+
+        if (
+            env.ASSETS
+        ) {
+
+            return env.ASSETS.fetch(
+                request
+            );
+
+        }
+
+
+        /* ======================================================
+           FALLBACK
+        ====================================================== */
 
         return new Response(
+
             "1v1 Video Call API",
+
             {
-                status: 404
+                status:
+                    404
             }
+
         );
 
     }
