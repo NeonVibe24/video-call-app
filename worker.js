@@ -21,6 +21,10 @@ const PRESENCE_TIMEOUT =
     30 * 1000;
 
 
+const CALL_TIMEOUT =
+    5 * 60 * 1000;
+
+
 /* ============================================================
    CORS
 ============================================================ */
@@ -40,14 +44,12 @@ function corsHeaders() {
 
         "Content-Type":
             "application/json"
-
     };
-
 }
 
 
 /* ============================================================
-   RESPONSE
+   JSON
 ============================================================ */
 
 function json(
@@ -65,11 +67,8 @@ function json(
 
             headers:
                 corsHeaders()
-
         }
-
     );
-
 }
 
 
@@ -77,9 +76,7 @@ function json(
    BASE64URL
 ============================================================ */
 
-function base64url(
-    input
-) {
+function base64url(input) {
 
     let bytes;
 
@@ -98,7 +95,6 @@ function base64url(
             new TextEncoder().encode(
                 String(input)
             );
-
     }
 
 
@@ -126,27 +122,22 @@ function base64url(
                     )
                 )
             );
-
     }
 
 
     return btoa(binary)
-
         .replace(
             /\+/g,
             "-"
         )
-
         .replace(
             /\//g,
             "_"
         )
-
         .replace(
             /=+$/,
             ""
         );
-
 }
 
 
@@ -154,9 +145,7 @@ function base64url(
    NORMALIZE PRIVATE KEY
 ============================================================ */
 
-function normalizePrivateKey(
-    pem
-) {
+function normalizePrivateKey(pem) {
 
     if (
         typeof pem !==
@@ -166,7 +155,6 @@ function normalizePrivateKey(
         throw new Error(
             "JAAS_PRIVATE_KEY is not a string."
         );
-
     }
 
 
@@ -187,19 +175,15 @@ function normalizePrivateKey(
 
 
     if (
-
         (
             key.startsWith('"') &&
             key.endsWith('"')
         )
-
         ||
-
         (
             key.startsWith("'") &&
             key.endsWith("'")
         )
-
     ) {
 
         key =
@@ -209,7 +193,6 @@ function normalizePrivateKey(
                     -1
                 )
                 .trim();
-
     }
 
 
@@ -228,17 +211,14 @@ function normalizePrivateKey(
 
 
     return key.trim();
-
 }
 
 
 /* ============================================================
-   PEM -> DER
+   PEM -> ARRAY BUFFER
 ============================================================ */
 
-function pemToArrayBuffer(
-    pem
-) {
+function pemToArrayBuffer(pem) {
 
     const normalized =
         normalizePrivateKey(
@@ -259,16 +239,14 @@ function pemToArrayBuffer(
         ) {
 
             throw new Error(
-                "Private key is PKCS#1. Expected PKCS#8 BEGIN PRIVATE KEY."
+                "Private key is PKCS#1. Expected PKCS#8."
             );
-
         }
 
 
         throw new Error(
-            "Invalid PEM format. Expected BEGIN PRIVATE KEY."
+            "Invalid PEM format."
         );
-
     }
 
 
@@ -281,7 +259,6 @@ function pemToArrayBuffer(
         throw new Error(
             "Private key is missing END PRIVATE KEY."
         );
-
     }
 
 
@@ -309,7 +286,6 @@ function pemToArrayBuffer(
         throw new Error(
             "Private key body is empty."
         );
-
     }
 
 
@@ -321,12 +297,11 @@ function pemToArrayBuffer(
         binary =
             atob(base64);
 
-    } catch (error) {
+    } catch (_) {
 
         throw new Error(
             "Private key contains invalid Base64 data."
         );
-
     }
 
 
@@ -344,12 +319,10 @@ function pemToArrayBuffer(
 
         bytes[i] =
             binary.charCodeAt(i);
-
     }
 
 
     return bytes.buffer;
-
 }
 
 
@@ -381,7 +354,6 @@ async function importPrivateKey(
 
                 hash:
                     "SHA-256"
-
             },
 
             false,
@@ -389,26 +361,20 @@ async function importPrivateKey(
             [
                 "sign"
             ]
-
         );
 
     } catch (error) {
 
         throw new Error(
-
             "PKCS#8 private key import failed: " +
-
             (
                 error &&
                 error.message
                     ? error.message
                     : String(error)
             )
-
         );
-
     }
-
 }
 
 
@@ -437,10 +403,6 @@ async function createJWT(
         crypto.randomUUID();
 
 
-    /* ========================================================
-       HEADER
-    ======================================================== */
-
     const header = {
 
         alg:
@@ -451,13 +413,8 @@ async function createJWT(
 
         typ:
             "JWT"
-
     };
 
-
-    /* ========================================================
-       PAYLOAD
-    ======================================================== */
 
     const payload = {
 
@@ -495,7 +452,6 @@ async function createJWT(
 
                 email:
                     ""
-
             },
 
 
@@ -521,17 +477,10 @@ async function createJWT(
 
                 "outbound-call":
                     false
-
             }
-
         }
-
     };
 
-
-    /* ========================================================
-       ENCODE
-    ======================================================== */
 
     const encodedHeader =
         base64url(
@@ -555,19 +504,11 @@ async function createJWT(
         encodedPayload;
 
 
-    /* ========================================================
-       IMPORT KEY
-    ======================================================== */
-
     const key =
         await importPrivateKey(
             privateKeyPem
         );
 
-
-    /* ========================================================
-       SIGN
-    ======================================================== */
 
     let signature;
 
@@ -587,50 +528,36 @@ async function createJWT(
                 new TextEncoder().encode(
                     unsignedToken
                 )
-
             );
 
     } catch (error) {
 
         throw new Error(
-
             "JWT signing failed: " +
-
             (
                 error &&
                 error.message
                     ? error.message
                     : String(error)
             )
-
         );
-
     }
 
 
-    /* ========================================================
-       FINAL TOKEN
-    ======================================================== */
-
     return (
-
         unsignedToken +
-
         "." +
-
         base64url(
             new Uint8Array(
                 signature
             )
         )
-
     );
-
 }
 
 
 /* ============================================================
-   CALL SIGNALING HELPER
+   CALL SIGNAL HELPER
 ============================================================ */
 
 async function callSignal(
@@ -642,16 +569,12 @@ async function callSignal(
     if (!env.CALL_SIGNAL) {
 
         return json(
-
             {
                 error:
-                    "CALL_SIGNAL Durable Object is not configured yet."
+                    "CALL_SIGNAL Durable Object is not configured."
             },
-
             500
-
         );
-
     }
 
 
@@ -684,14 +607,12 @@ async function callSignal(
             url.toString(),
             request
         )
-
     );
-
 }
 
 
 /* ============================================================
-   REQUEST HANDLER
+   MAIN WORKER
 ============================================================ */
 
 export default {
@@ -717,20 +638,15 @@ export default {
         ) {
 
             return new Response(
-
                 null,
-
                 {
                     status:
                         204,
 
                     headers:
                         corsHeaders()
-
                 }
-
             );
-
         }
 
 
@@ -753,9 +669,7 @@ export default {
 
                 signaling:
                     !!env.CALL_SIGNAL
-
             });
-
         }
 
 
@@ -775,7 +689,7 @@ export default {
             return json({
 
                 worker:
-                    "presence-version",
+                    "video-call",
 
                 secretConfigured:
                     !!secret,
@@ -808,9 +722,7 @@ export default {
 
                 callSignalConfigured:
                     !!env.CALL_SIGNAL
-
             });
-
         }
 
 
@@ -835,7 +747,6 @@ export default {
                     },
                     405
                 );
-
             }
 
 
@@ -844,7 +755,6 @@ export default {
                 env,
                 "create"
             );
-
         }
 
 
@@ -869,7 +779,6 @@ export default {
                     },
                     405
                 );
-
             }
 
 
@@ -878,7 +787,6 @@ export default {
                 env,
                 "poll"
             );
-
         }
 
 
@@ -891,28 +799,11 @@ export default {
             "/api/call/accept"
         ) {
 
-            if (
-                request.method !==
-                "POST"
-            ) {
-
-                return json(
-                    {
-                        error:
-                            "Method not allowed."
-                    },
-                    405
-                );
-
-            }
-
-
             return callSignal(
                 request,
                 env,
                 "accept"
             );
-
         }
 
 
@@ -925,28 +816,11 @@ export default {
             "/api/call/decline"
         ) {
 
-            if (
-                request.method !==
-                "POST"
-            ) {
-
-                return json(
-                    {
-                        error:
-                            "Method not allowed."
-                    },
-                    405
-                );
-
-            }
-
-
             return callSignal(
                 request,
                 env,
                 "decline"
             );
-
         }
 
 
@@ -959,28 +833,11 @@ export default {
             "/api/call/cancel"
         ) {
 
-            if (
-                request.method !==
-                "POST"
-            ) {
-
-                return json(
-                    {
-                        error:
-                            "Method not allowed."
-                    },
-                    405
-                );
-
-            }
-
-
             return callSignal(
                 request,
                 env,
                 "cancel"
             );
-
         }
 
 
@@ -993,28 +850,11 @@ export default {
             "/api/call/status"
         ) {
 
-            if (
-                request.method !==
-                "POST"
-            ) {
-
-                return json(
-                    {
-                        error:
-                            "Method not allowed."
-                    },
-                    405
-                );
-
-            }
-
-
             return callSignal(
                 request,
                 env,
                 "status"
             );
-
         }
 
 
@@ -1027,28 +867,11 @@ export default {
             "/api/presence/online"
         ) {
 
-            if (
-                request.method !==
-                "POST"
-            ) {
-
-                return json(
-                    {
-                        error:
-                            "Method not allowed."
-                    },
-                    405
-                );
-
-            }
-
-
             return callSignal(
                 request,
                 env,
                 "presence-online"
             );
-
         }
 
 
@@ -1061,28 +884,11 @@ export default {
             "/api/presence/poll"
         ) {
 
-            if (
-                request.method !==
-                "POST"
-            ) {
-
-                return json(
-                    {
-                        error:
-                            "Method not allowed."
-                    },
-                    405
-                );
-
-            }
-
-
             return callSignal(
                 request,
                 env,
                 "presence-poll"
             );
-
         }
 
 
@@ -1095,28 +901,11 @@ export default {
             "/api/presence/offline"
         ) {
 
-            if (
-                request.method !==
-                "POST"
-            ) {
-
-                return json(
-                    {
-                        error:
-                            "Method not allowed."
-                    },
-                    405
-                );
-
-            }
-
-
             return callSignal(
                 request,
                 env,
                 "presence-offline"
             );
-
         }
 
 
@@ -1141,7 +930,6 @@ export default {
                     },
                     405
                 );
-
             }
 
 
@@ -1156,7 +944,6 @@ export default {
                     },
                     500
                 );
-
             }
 
 
@@ -1177,13 +964,13 @@ export default {
                     },
                     400
                 );
-
             }
 
 
             const name =
                 String(
-                    body.name || ""
+                    body.name ||
+                    ""
                 )
                     .trim()
                     .slice(
@@ -1194,7 +981,8 @@ export default {
 
             const room =
                 String(
-                    body.room || ""
+                    body.room ||
+                    ""
                 )
                     .trim()
                     .replace(
@@ -1216,7 +1004,6 @@ export default {
                     },
                     400
                 );
-
             }
 
 
@@ -1229,7 +1016,6 @@ export default {
                     },
                     400
                 );
-
             }
 
 
@@ -1237,26 +1023,23 @@ export default {
 
                 const token =
                     await createJWT(
-
                         env.JAAS_PRIVATE_KEY,
-
                         name,
-
                         room
-
                     );
 
 
                 return json({
+
+                    ok:
+                        true,
 
                     token:
                         token,
 
                     appId:
                         APP_ID
-
                 });
-
 
             } catch (error) {
 
@@ -1268,7 +1051,6 @@ export default {
 
                 return json(
                     {
-
                         error:
                             "JWT generation failed.",
 
@@ -1277,48 +1059,33 @@ export default {
                             error.message
                                 ? error.message
                                 : String(error)
-
                     },
                     500
                 );
-
             }
-
         }
 
 
         /* ======================================================
-           STATIC ASSETS
+           STATIC
         ====================================================== */
 
-        if (
-            env.ASSETS
-        ) {
+        if (env.ASSETS) {
 
             return env.ASSETS.fetch(
                 request
             );
-
         }
 
 
-        /* ======================================================
-           FALLBACK
-        ====================================================== */
-
         return new Response(
-
             "1v1 Video Call API",
-
             {
                 status:
                     404
             }
-
         );
-
     }
-
 };
 
 
@@ -1338,12 +1105,11 @@ export class CallSignal {
 
         this.env =
             env;
-
     }
 
 
     /* ========================================================
-       CLEAN OLD DATA
+       CLEANUP
     ======================================================== */
 
     async cleanup() {
@@ -1352,16 +1118,10 @@ export class CallSignal {
             Date.now();
 
 
-        /* ======================================================
-           CLEAN CALLS
-        ====================================================== */
-
         const callEntries =
             await this.state.storage.list({
-
                 prefix:
                     "call:"
-
             });
 
 
@@ -1375,28 +1135,20 @@ export class CallSignal {
                 !call.createdAt ||
                 now -
                     call.createdAt >
-                    (5 * 60 * 1000)
+                    CALL_TIMEOUT
             ) {
 
                 await this.state.storage.delete(
                     key
                 );
-
             }
-
         }
 
 
-        /* ======================================================
-           CLEAN PRESENCE
-        ====================================================== */
-
         const presenceEntries =
             await this.state.storage.list({
-
                 prefix:
                     "presence:"
-
             });
 
 
@@ -1416,11 +1168,8 @@ export class CallSignal {
                 await this.state.storage.delete(
                     key
                 );
-
             }
-
         }
-
     }
 
 
@@ -1439,19 +1188,15 @@ export class CallSignal {
         } catch (_) {
 
             return null;
-
         }
-
     }
 
 
     /* ========================================================
-       VALIDATE ID
+       VALID ID
     ======================================================== */
 
-    validId(
-        value
-    ) {
+    validId(value) {
 
         return (
 
@@ -1471,14 +1216,12 @@ export class CallSignal {
             /^[a-zA-Z0-9_-]+$/.test(
                 value
             )
-
         );
-
     }
 
 
     /* ========================================================
-       GET ACTIVE CALL
+       ACTIVE CALL
     ======================================================== */
 
     async getActiveCallForUser(
@@ -1487,10 +1230,8 @@ export class CallSignal {
 
         const entries =
             await this.state.storage.list({
-
                 prefix:
                     "call:"
-
             });
 
 
@@ -1499,48 +1240,36 @@ export class CallSignal {
             of entries
         ) {
 
-            if (
-                !call
-            ) {
-
+            if (!call) {
                 continue;
-
             }
 
 
             const active =
                 call.status ===
                     "ringing"
-
                 ||
-
                 call.status ===
                     "accepted";
 
 
             if (
                 active &&
-
                 (
                     call.callerId ===
                         userId
-
                     ||
-
                     call.receiverId ===
                         userId
                 )
             ) {
 
                 return call;
-
             }
-
         }
 
 
         return null;
-
     }
 
 
@@ -1567,7 +1296,6 @@ export class CallSignal {
                 },
                 400
             );
-
         }
 
 
@@ -1575,8 +1303,7 @@ export class CallSignal {
             String(
                 body.callerId ||
                 ""
-            )
-                .trim();
+            ).trim();
 
 
         const callerName =
@@ -1595,8 +1322,7 @@ export class CallSignal {
             String(
                 body.receiverId ||
                 ""
-            )
-                .trim();
+            ).trim();
 
 
         const receiverName =
@@ -1640,7 +1366,6 @@ export class CallSignal {
                 },
                 400
             );
-
         }
 
 
@@ -1653,7 +1378,6 @@ export class CallSignal {
                 },
                 400
             );
-
         }
 
 
@@ -1670,7 +1394,6 @@ export class CallSignal {
                 },
                 400
             );
-
         }
 
 
@@ -1683,7 +1406,6 @@ export class CallSignal {
                 },
                 400
             );
-
         }
 
 
@@ -1699,12 +1421,11 @@ export class CallSignal {
                 },
                 400
             );
-
         }
 
 
         /* ==================================================
-           VERIFY RECEIVER IS ONLINE
+           RECEIVER ONLINE
         ================================================== */
 
         const receiverPresence =
@@ -1716,9 +1437,7 @@ export class CallSignal {
 
         if (
             !receiverPresence ||
-
             !receiverPresence.lastSeenAt ||
-
             Date.now() -
                 receiverPresence.lastSeenAt >
                 PRESENCE_TIMEOUT
@@ -1731,12 +1450,11 @@ export class CallSignal {
                 },
                 409
             );
-
         }
 
 
         /* ==================================================
-           PREVENT MULTIPLE ACTIVE CALLS
+           CALLER BUSY
         ================================================== */
 
         const callerActiveCall =
@@ -1745,22 +1463,24 @@ export class CallSignal {
             );
 
 
-        if (
-            callerActiveCall
-        ) {
+        if (callerActiveCall) {
 
             return json(
                 {
                     error:
                         "You are already in another call.",
+
                     call:
                         callerActiveCall
                 },
                 409
             );
-
         }
 
+
+        /* ==================================================
+           RECEIVER BUSY
+        ================================================== */
 
         const receiverActiveCall =
             await this.getActiveCallForUser(
@@ -1768,25 +1488,23 @@ export class CallSignal {
             );
 
 
-        if (
-            receiverActiveCall
-        ) {
+        if (receiverActiveCall) {
 
             return json(
                 {
                     error:
                         "This user is already in another call.",
+
                     call:
                         receiverActiveCall
                 },
                 409
             );
-
         }
 
 
         /* ==================================================
-           CREATE CALL
+           CREATE
         ================================================== */
 
         const callId =
@@ -1827,19 +1545,19 @@ export class CallSignal {
 
             updatedAt:
                 now
-
         };
 
 
         await this.state.storage.put(
-
             "call:" +
             callId,
-
             call
-
         );
 
+
+        /* IMPORTANT:
+           app.js expects data.call
+        */
 
         return json({
 
@@ -1848,14 +1566,12 @@ export class CallSignal {
 
             call:
                 call
-
         });
-
     }
 
 
     /* ========================================================
-       POLL INCOMING CALLS
+       POLL INCOMING
     ======================================================== */
 
     async pollIncomingCalls(
@@ -1877,7 +1593,6 @@ export class CallSignal {
                 },
                 400
             );
-
         }
 
 
@@ -1885,8 +1600,7 @@ export class CallSignal {
             String(
                 body.userId ||
                 ""
-            )
-                .trim();
+            ).trim();
 
 
         if (
@@ -1902,16 +1616,13 @@ export class CallSignal {
                 },
                 400
             );
-
         }
 
 
         const entries =
             await this.state.storage.list({
-
                 prefix:
                     "call:"
-
             });
 
 
@@ -1925,10 +1636,8 @@ export class CallSignal {
 
             if (
                 call &&
-
                 call.receiverId ===
                     userId &&
-
                 call.status ===
                     "ringing"
             ) {
@@ -1936,9 +1645,7 @@ export class CallSignal {
                 calls.push(
                     call
                 );
-
             }
-
         }
 
 
@@ -1959,9 +1666,7 @@ export class CallSignal {
 
             calls:
                 calls
-
         });
-
     }
 
 
@@ -1988,7 +1693,6 @@ export class CallSignal {
                 },
                 400
             );
-
         }
 
 
@@ -1996,8 +1700,7 @@ export class CallSignal {
             String(
                 body.userId ||
                 ""
-            )
-                .trim();
+            ).trim();
 
 
         const name =
@@ -2025,7 +1728,6 @@ export class CallSignal {
                 },
                 400
             );
-
         }
 
 
@@ -2038,15 +1740,7 @@ export class CallSignal {
                 },
                 400
             );
-
         }
-
-
-        const existing =
-            await this.state.storage.get(
-                "presence:" +
-                userId
-            );
 
 
         const now =
@@ -2063,17 +1757,13 @@ export class CallSignal {
 
             lastSeenAt:
                 now
-
         };
 
 
         await this.state.storage.put(
-
             "presence:" +
             userId,
-
             user
-
         );
 
 
@@ -2084,9 +1774,7 @@ export class CallSignal {
 
             user:
                 user
-
         });
-
     }
 
 
@@ -2113,7 +1801,6 @@ export class CallSignal {
                 },
                 400
             );
-
         }
 
 
@@ -2121,8 +1808,7 @@ export class CallSignal {
             String(
                 body.userId ||
                 ""
-            )
-                .trim();
+            ).trim();
 
 
         if (
@@ -2138,7 +1824,6 @@ export class CallSignal {
                 },
                 400
             );
-
         }
 
 
@@ -2148,10 +1833,8 @@ export class CallSignal {
 
         const presenceEntries =
             await this.state.storage.list({
-
                 prefix:
                     "presence:"
-
             });
 
 
@@ -2163,12 +1846,8 @@ export class CallSignal {
             of presenceEntries
         ) {
 
-            if (
-                !user
-            ) {
-
+            if (!user) {
                 continue;
-
             }
 
 
@@ -2176,18 +1855,14 @@ export class CallSignal {
                 user.userId ===
                 currentUserId
             ) {
-
                 continue;
-
             }
 
 
             if (
                 !user.lastSeenAt
             ) {
-
                 continue;
-
             }
 
 
@@ -2196,9 +1871,7 @@ export class CallSignal {
                     user.lastSeenAt >
                     PRESENCE_TIMEOUT
             ) {
-
                 continue;
-
             }
 
 
@@ -2221,9 +1894,7 @@ export class CallSignal {
                     activeCall
                         ? "busy"
                         : "online"
-
             });
-
         }
 
 
@@ -2241,22 +1912,13 @@ export class CallSignal {
                     return a.name.localeCompare(
                         b.name
                     );
-
                 }
 
 
-                if (
-                    a.status ===
+                return a.status ===
                     "online"
-                ) {
-
-                    return -1;
-
-                }
-
-
-                return 1;
-
+                    ? -1
+                    : 1;
             }
         );
 
@@ -2268,9 +1930,7 @@ export class CallSignal {
 
             users:
                 users
-
         });
-
     }
 
 
@@ -2297,7 +1957,6 @@ export class CallSignal {
                 },
                 400
             );
-
         }
 
 
@@ -2305,8 +1964,7 @@ export class CallSignal {
             String(
                 body.userId ||
                 ""
-            )
-                .trim();
+            ).trim();
 
 
         if (
@@ -2322,25 +1980,19 @@ export class CallSignal {
                 },
                 400
             );
-
         }
 
 
         await this.state.storage.delete(
-
             "presence:" +
             userId
-
         );
 
 
         return json({
-
             ok:
                 true
-
         });
-
     }
 
 
@@ -2368,7 +2020,6 @@ export class CallSignal {
                 },
                 400
             );
-
         }
 
 
@@ -2376,25 +2027,19 @@ export class CallSignal {
             String(
                 body.callId ||
                 ""
-            )
-                .trim();
+            ).trim();
 
 
         const userId =
             String(
                 body.userId ||
                 ""
-            )
-                .trim();
+            ).trim();
 
 
         if (
-            !this.validId(
-                callId.replace(
-                    /-/g,
-                    ""
-                )
-            )
+            !callId ||
+            callId.length > 100
         ) {
 
             return json(
@@ -2404,7 +2049,6 @@ export class CallSignal {
                 },
                 400
             );
-
         }
 
 
@@ -2421,7 +2065,6 @@ export class CallSignal {
                 },
                 400
             );
-
         }
 
 
@@ -2445,7 +2088,6 @@ export class CallSignal {
                 },
                 404
             );
-
         }
 
 
@@ -2459,15 +2101,10 @@ export class CallSignal {
         ) {
 
             if (
-
                 userId !==
-                    call.callerId
-
-                &&
-
+                    call.callerId &&
                 userId !==
                     call.receiverId
-
             ) {
 
                 return json(
@@ -2477,7 +2114,6 @@ export class CallSignal {
                     },
                     403
                 );
-
             }
 
 
@@ -2486,11 +2122,12 @@ export class CallSignal {
                 ok:
                     true,
 
+                status:
+                    call.status,
+
                 call:
                     call
-
             });
-
         }
 
 
@@ -2515,7 +2152,6 @@ export class CallSignal {
                     },
                     403
                 );
-
             }
 
 
@@ -2529,11 +2165,12 @@ export class CallSignal {
                     ok:
                         true,
 
+                    status:
+                        call.status,
+
                     call:
                         call
-
                 });
-
             }
 
 
@@ -2556,11 +2193,12 @@ export class CallSignal {
                 ok:
                     true,
 
+                status:
+                    call.status,
+
                 call:
                     call
-
             });
-
         }
 
 
@@ -2585,7 +2223,6 @@ export class CallSignal {
                     },
                     403
                 );
-
             }
 
 
@@ -2606,7 +2243,6 @@ export class CallSignal {
                     key,
                     call
                 );
-
             }
 
 
@@ -2615,11 +2251,12 @@ export class CallSignal {
                 ok:
                     true,
 
+                status:
+                    call.status,
+
                 call:
                     call
-
             });
-
         }
 
 
@@ -2644,13 +2281,14 @@ export class CallSignal {
                     },
                     403
                 );
-
             }
 
 
             if (
                 call.status ===
-                "ringing"
+                    "ringing" ||
+                call.status ===
+                    "accepted"
             ) {
 
                 call.status =
@@ -2665,7 +2303,6 @@ export class CallSignal {
                     key,
                     call
                 );
-
             }
 
 
@@ -2674,11 +2311,12 @@ export class CallSignal {
                 ok:
                     true,
 
+                status:
+                    call.status,
+
                 call:
                     call
-
             });
-
         }
 
 
@@ -2689,7 +2327,6 @@ export class CallSignal {
             },
             404
         );
-
     }
 
 
@@ -2708,19 +2345,14 @@ export class CallSignal {
 
 
         const action =
-            url.pathname
-                .replace(
-                    "/signal/",
-                    ""
-                );
+            url.pathname.replace(
+                "/signal/",
+                ""
+            );
 
 
         await this.cleanup();
 
-
-        /* ======================================================
-           CREATE CALL
-        ====================================================== */
 
         if (
             action ===
@@ -2730,13 +2362,8 @@ export class CallSignal {
             return this.createCall(
                 request
             );
-
         }
 
-
-        /* ======================================================
-           POLL INCOMING CALLS
-        ====================================================== */
 
         if (
             action ===
@@ -2746,13 +2373,8 @@ export class CallSignal {
             return this.pollIncomingCalls(
                 request
             );
-
         }
 
-
-        /* ======================================================
-           PRESENCE ONLINE
-        ====================================================== */
 
         if (
             action ===
@@ -2762,13 +2384,8 @@ export class CallSignal {
             return this.presenceOnline(
                 request
             );
-
         }
 
-
-        /* ======================================================
-           PRESENCE POLL
-        ====================================================== */
 
         if (
             action ===
@@ -2778,13 +2395,8 @@ export class CallSignal {
             return this.presencePoll(
                 request
             );
-
         }
 
-
-        /* ======================================================
-           PRESENCE OFFLINE
-        ====================================================== */
 
         if (
             action ===
@@ -2794,55 +2406,33 @@ export class CallSignal {
             return this.presenceOffline(
                 request
             );
-
         }
 
 
-        /* ======================================================
-           ACCEPT / DECLINE / CANCEL / STATUS
-        ====================================================== */
-
         if (
-
             action ===
-                "accept"
-
-            ||
-
+                "accept" ||
             action ===
-                "decline"
-
-            ||
-
+                "decline" ||
             action ===
-                "cancel"
-
-            ||
-
+                "cancel" ||
             action ===
                 "status"
-
         ) {
 
             return this.callAction(
                 request,
                 action
             );
-
         }
 
 
         return json(
-
             {
                 error:
                     "Unknown signaling action."
             },
-
             404
-
         );
-
     }
-
 }
