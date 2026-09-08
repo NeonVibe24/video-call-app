@@ -1,5 +1,6 @@
 * {
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
 }
 
 html,
@@ -11,13 +12,15 @@ body {
 }
 
 body {
-    background: #080a0f;
+    background: #07090d;
     color: #ffffff;
 
     font-family:
         Arial,
         Helvetica,
         sans-serif;
+
+    -webkit-font-smoothing: antialiased;
 }
 
 button,
@@ -34,15 +37,21 @@ button:disabled {
     opacity: 0.55;
 }
 
+
+/* =========================================================
+   APP
+========================================================= */
+
 .app {
     width: 100%;
     min-height: 100vh;
 
     background:
         radial-gradient(
-            circle at top,
-            #17213a 0,
-            #080a0f 45%
+            circle at 50% -10%,
+            #1c2b4b 0%,
+            #0d111a 32%,
+            #07090d 70%
         );
 }
 
@@ -52,66 +61,83 @@ button:disabled {
 ========================================================= */
 
 .topbar {
-    height: 70px;
+    width: 100%;
+    height: 64px;
 
     display: flex;
     align-items: center;
     justify-content: space-between;
 
-    padding: 0 22px;
+    padding: 0 18px;
 
-    background: rgba(8, 10, 15, 0.95);
+    background: rgba(7, 9, 13, 0.94);
 
-    border-bottom: 1px solid #202531;
+    border-bottom: 1px solid #202632;
+
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 }
 
 .brand {
     display: flex;
     align-items: center;
-    gap: 11px;
+
+    gap: 10px;
 }
 
 .logo {
-    width: 42px;
-    height: 42px;
+    width: 40px;
+    height: 40px;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
-    border-radius: 12px;
+    border-radius: 11px;
 
-    background: #2563eb;
+    background:
+        linear-gradient(
+            135deg,
+            #2563eb,
+            #1d4ed8
+        );
 
-    font-size: 20px;
+    color: #ffffff;
+
+    font-size: 19px;
     font-weight: 800;
+
+    box-shadow:
+        0 6px 20px rgba(37, 99, 235, 0.25);
 }
 
 .title {
-    font-size: 17px;
+    font-size: 16px;
     font-weight: 700;
 }
 
 .subtitle {
-    margin-top: 3px;
+    margin-top: 2px;
 
-    color: #7f8796;
+    color: #737d8e;
 
-    font-size: 12px;
+    font-size: 11px;
 }
 
 .status {
     display: flex;
     align-items: center;
+
     gap: 7px;
 
-    color: #858d9c;
-    font-size: 13px;
+    color: #7f8999;
+
+    font-size: 12px;
 }
 
 .status span:first-child {
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
 
     flex-shrink: 0;
 
@@ -120,7 +146,7 @@ button:disabled {
     background: #22c55e;
 
     box-shadow:
-        0 0 8px rgba(34, 197, 94, 0.7);
+        0 0 8px rgba(34, 197, 94, 0.75);
 }
 
 
@@ -129,60 +155,70 @@ button:disabled {
 ========================================================= */
 
 .home-screen {
-    min-height: calc(100vh - 70px);
+    width: 100%;
+    min-height: calc(100vh - 64px);
 
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
 
-    padding: 30px 18px;
+    padding: 24px 16px 35px;
 }
 
 .hero {
     width: 100%;
-    max-width: 480px;
+    max-width: 440px;
 
     text-align: center;
+
+    margin-bottom: 18px;
 }
 
 .hero-icon {
-    width: 78px;
-    height: 78px;
+    width: 62px;
+    height: 62px;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
-    margin: 0 auto 20px;
+    margin: 0 auto 13px;
 
-    border: 1px solid #272e3c;
-    border-radius: 23px;
+    border: 1px solid #293346;
+    border-radius: 19px;
 
-    background: #111621;
+    background:
+        linear-gradient(
+            145deg,
+            #121a2a,
+            #0d121c
+        );
 
-    font-size: 34px;
+    font-size: 28px;
 
     box-shadow:
-        0 15px 40px rgba(0, 0, 0, 0.25);
+        0 12px 35px rgba(0, 0, 0, 0.3);
 }
 
 .hero h1 {
     margin: 0;
 
-    font-size: 31px;
+    color: #ffffff;
+
+    font-size: 27px;
     line-height: 1.2;
+    font-weight: 800;
 }
 
 .hero p {
-    margin: 13px auto 27px;
+    max-width: 390px;
 
-    max-width: 430px;
+    margin: 8px auto 0;
 
-    color: #8992a2;
+    color: #7f8999;
 
-    font-size: 14px;
-    line-height: 1.6;
+    font-size: 12px;
+    line-height: 1.5;
 }
 
 
@@ -192,27 +228,33 @@ button:disabled {
 
 .card {
     width: 100%;
-    max-width: 410px;
+    max-width: 430px;
 
-    padding: 23px;
+    padding: 20px;
 
-    border: 1px solid #252b37;
+    border: 1px solid #252c38;
     border-radius: 18px;
 
-    background: #10131a;
+    background:
+        linear-gradient(
+            180deg,
+            #11151d,
+            #0d1118
+        );
 
     box-shadow:
-        0 25px 70px rgba(0, 0, 0, 0.4);
+        0 20px 60px rgba(0, 0, 0, 0.42);
 }
 
 .card label {
     display: block;
 
-    margin-bottom: 8px;
+    margin-bottom: 7px;
 
-    color: #b6bdca;
+    color: #c0c7d3;
 
-    font-size: 13px;
+    font-size: 12px;
+    font-weight: 600;
 }
 
 
@@ -222,34 +264,37 @@ button:disabled {
 
 .card input {
     width: 100%;
-    height: 50px;
+    height: 48px;
 
     padding: 0 14px;
 
-    border: 1px solid #2b313e;
+    border: 1px solid #2a3240;
     border-radius: 10px;
 
     outline: none;
 
-    background: #090c12;
+    background: #080b11;
     color: #ffffff;
 
-    font-size: 15px;
+    font-size: 14px;
 
     transition:
         border-color 0.2s ease,
-        box-shadow 0.2s ease;
+        box-shadow 0.2s ease,
+        background 0.2s ease;
 }
 
 .card input:focus {
     border-color: #2563eb;
+
+    background: #0a0f18;
 
     box-shadow:
         0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
 .card input::placeholder {
-    color: #5f6775;
+    color: #596272;
 }
 
 
@@ -264,12 +309,12 @@ button:disabled {
     align-items: center;
     justify-content: space-between;
 
-    margin-top: 20px;
-    margin-bottom: 10px;
+    margin-top: 17px;
+    margin-bottom: 9px;
 
-    padding-top: 18px;
+    padding-top: 16px;
 
-    border-top: 1px solid #252a34;
+    border-top: 1px solid #222936;
 }
 
 .online-users-header > div {
@@ -280,12 +325,14 @@ button:disabled {
 }
 
 .online-users-header strong {
-    color: #ffffff;
+    color: #f4f6f9;
+
     font-size: 14px;
+    font-weight: 700;
 }
 
 .online-count {
-    min-width: 22px;
+    min-width: 23px;
     height: 21px;
 
     display: inline-flex;
@@ -294,49 +341,59 @@ button:disabled {
 
     padding: 0 6px;
 
+    border: 1px solid #1e3a6f;
     border-radius: 20px;
 
-    background: #172554;
+    background: #101f3d;
 
     color: #60a5fa;
 
-    font-size: 11px;
-    font-weight: 700;
+    font-size: 10px;
+    font-weight: 800;
 }
 
+
+/* =========================================================
+   REFRESH
+========================================================= */
+
 .refresh-button {
-    width: 34px;
-    height: 34px;
+    width: 35px;
+    height: 35px;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
+    border: 1px solid #303846;
+    border-radius: 9px;
+
+    outline: none;
+
+    background: #171c25;
+    color: #d9dee7;
+
+    font-size: 19px;
+    line-height: 1;
+
     position: relative;
     z-index: 10;
 
-    border: 1px solid #303744;
-    border-radius: 9px;
-
-    background: #191d25;
-    color: #ffffff;
-
-    font-size: 19px;
-
-    cursor: pointer;
     pointer-events: auto;
 
     transition:
         background 0.2s ease,
-        transform 0.2s ease;
+        border-color 0.2s ease,
+        transform 0.15s ease;
 }
 
 .refresh-button:hover {
-    background: #222732;
+    background: #202631;
+    border-color: #3a4556;
 }
 
 .refresh-button:active {
-    transform: rotate(90deg) scale(0.95);
+    transform: rotate(90deg) scale(0.93);
 }
 
 
@@ -350,17 +407,20 @@ button:disabled {
     display: flex;
     flex-direction: column;
 
-    gap: 8px;
+    gap: 7px;
 
-    max-height: 360px;
+    max-height: 330px;
 
     overflow-y: auto;
 
-    padding-right: 2px;
+    padding: 1px 2px 1px 0;
+
+    scrollbar-width: thin;
+    scrollbar-color: #303846 transparent;
 }
 
 .online-users::-webkit-scrollbar {
-    width: 5px;
+    width: 4px;
 }
 
 .online-users::-webkit-scrollbar-track {
@@ -369,7 +429,7 @@ button:disabled {
 
 .online-users::-webkit-scrollbar-thumb {
     border-radius: 10px;
-    background: #303744;
+    background: #303846;
 }
 
 
@@ -379,35 +439,40 @@ button:disabled {
 
 .online-user-item {
     width: 100%;
-    min-height: 62px;
+    min-height: 61px;
 
     display: flex;
     align-items: center;
 
-    gap: 11px;
+    gap: 10px;
 
-    padding: 9px 10px;
+    padding: 8px 9px;
 
-    border: 1px solid #252c38;
+    border: 1px solid #252d3a;
     border-radius: 12px;
 
-    background: #0c1017;
+    background:
+        linear-gradient(
+            135deg,
+            #10151e,
+            #0c1017
+        );
 
     position: relative;
 
     transition:
-        background 0.2s ease,
-        border-color 0.2s ease,
+        background 0.18s ease,
+        border-color 0.18s ease,
         transform 0.1s ease;
 }
 
 .online-user-item:hover {
-    background: #121823;
-    border-color: #303a4b;
+    background: #141a24;
+    border-color: #344052;
 }
 
 .online-user-item:active {
-    transform: scale(0.99);
+    transform: scale(0.985);
 }
 
 
@@ -423,7 +488,7 @@ button:disabled {
     display: flex;
     align-items: center;
 
-    gap: 11px;
+    gap: 10px;
 
     overflow: hidden;
 }
@@ -434,8 +499,8 @@ button:disabled {
 ========================================================= */
 
 .online-user-avatar {
-    width: 42px;
-    height: 42px;
+    width: 41px;
+    height: 41px;
 
     flex-shrink: 0;
 
@@ -443,7 +508,7 @@ button:disabled {
     align-items: center;
     justify-content: center;
 
-    border: 1px solid #334155;
+    border: 1px solid #36517e;
     border-radius: 50%;
 
     background:
@@ -455,8 +520,11 @@ button:disabled {
 
     color: #ffffff;
 
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 800;
+
+    box-shadow:
+        0 4px 14px rgba(37, 99, 235, 0.18);
 }
 
 
@@ -471,9 +539,9 @@ button:disabled {
 .online-user-name {
     overflow: hidden;
 
-    color: #ffffff;
+    color: #f5f7fa;
 
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
 
     text-overflow: ellipsis;
@@ -482,18 +550,19 @@ button:disabled {
 
 
 /* =========================================================
-   STATUS
+   USER STATUS
 ========================================================= */
 
 .online-user-status {
     display: flex;
     align-items: center;
 
-    margin-top: 4px;
+    margin-top: 3px;
 
     color: #22c55e;
 
-    font-size: 11px;
+    font-size: 10px;
+    font-weight: 500;
 }
 
 .online-user-status.busy {
@@ -501,12 +570,12 @@ button:disabled {
 }
 
 .online-status-dot {
-    display: inline-block;
-
     width: 7px;
     height: 7px;
 
     flex-shrink: 0;
+
+    display: inline-block;
 
     margin-right: 5px;
 
@@ -522,7 +591,7 @@ button:disabled {
     background: #f59e0b;
 
     box-shadow:
-        0 0 7px rgba(245, 158, 11, 0.5);
+        0 0 7px rgba(245, 158, 11, 0.55);
 }
 
 
@@ -531,7 +600,7 @@ button:disabled {
 ========================================================= */
 
 .online-call-button {
-    min-width: 68px;
+    min-width: 72px;
     height: 38px;
 
     flex-shrink: 0;
@@ -540,34 +609,41 @@ button:disabled {
     align-items: center;
     justify-content: center;
 
-    position: relative;
-    z-index: 20;
+    padding: 0 10px;
 
     border: none;
     border-radius: 9px;
 
-    background: #16a34a;
+    outline: none;
+
+    background:
+        linear-gradient(
+            135deg,
+            #16a34a,
+            #15803d
+        );
+
     color: #ffffff;
 
-    font-size: 12px;
-    font-weight: 700;
+    font-size: 11px;
+    font-weight: 800;
 
-    cursor: pointer;
+    position: relative;
+    z-index: 20;
+
     pointer-events: auto;
 
     user-select: none;
 
-    -webkit-tap-highlight-color: transparent;
-
     touch-action: manipulation;
 
     transition:
-        background 0.2s ease,
+        filter 0.15s ease,
         transform 0.1s ease;
 }
 
 .online-call-button:hover {
-    background: #15803d;
+    filter: brightness(1.1);
 }
 
 .online-call-button:active {
@@ -575,9 +651,9 @@ button:disabled {
 }
 
 .online-call-button.busy {
-    background: #191d25;
+    border: 1px solid #343c49;
 
-    border: 1px solid #343b48;
+    background: #191e27;
 
     color: #8b94a4;
 }
@@ -589,29 +665,37 @@ button:disabled {
 
 .no-users {
     width: 100%;
-    min-height: 115px;
+    min-height: 120px;
 
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
 
-    padding: 18px;
+    padding: 20px 15px;
 
-    border: 1px dashed #2b313e;
+    border: 1px dashed #2a3341;
     border-radius: 12px;
 
-    background: #0c1017;
+    background:
+        linear-gradient(
+            180deg,
+            #0d1219,
+            #0a0e14
+        );
 
-    color: #7f8796;
+    color: #7e8898;
 
-    font-size: 13px;
+    font-size: 12px;
     text-align: center;
 }
 
 .no-users-icon {
     margin-bottom: 7px;
-    font-size: 24px;
+
+    font-size: 25px;
+
+    opacity: 0.8;
 }
 
 .no-users small {
@@ -619,7 +703,7 @@ button:disabled {
 
     margin-top: 5px;
 
-    color: #555e6d;
+    color: #525c6c;
 
     font-size: 10px;
 }
@@ -631,38 +715,42 @@ button:disabled {
 
 .notice {
     width: 100%;
-    max-width: 410px;
+    max-width: 430px;
 
     display: flex;
 
     gap: 10px;
 
-    margin-top: 17px;
+    margin-top: 13px;
 
-    padding: 13px;
+    padding: 12px 13px;
 
-    border: 1px solid #202632;
+    border: 1px solid #202732;
     border-radius: 12px;
 
-    background: rgba(17, 21, 29, 0.8);
+    background: rgba(14, 18, 25, 0.88);
 }
 
 .notice-icon {
     flex-shrink: 0;
-    font-size: 17px;
+
+    font-size: 16px;
 }
 
 .notice strong {
-    font-size: 12px;
+    color: #dfe4eb;
+
+    font-size: 11px;
+    font-weight: 700;
 }
 
 .notice p {
     margin: 4px 0 0;
 
-    color: #737c8c;
+    color: #697384;
 
-    font-size: 11px;
-    line-height: 1.5;
+    font-size: 10px;
+    line-height: 1.45;
 }
 
 
@@ -674,7 +762,7 @@ button:disabled {
     display: none;
 
     width: 100%;
-    height: calc(100vh - 70px);
+    height: calc(100vh - 64px);
 
     background: #000000;
 }
@@ -685,37 +773,42 @@ button:disabled {
 }
 
 .call-topbar {
-    height: 58px;
+    width: 100%;
+    height: 56px;
 
     flex-shrink: 0;
 
     display: flex;
     align-items: center;
 
-    padding: 0 12px;
+    padding: 0 10px;
 
-    background: #10131a;
+    background: #0d1118;
 
-    border-bottom: 1px solid #222733;
+    border-bottom: 1px solid #202632;
 }
 
 .back-button {
     width: 40px;
     height: 36px;
 
-    border: 1px solid #2a303c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid #2b3340;
     border-radius: 9px;
 
-    background: #181c24;
+    outline: none;
+
+    background: #171c24;
     color: #ffffff;
 
     font-size: 20px;
-
-    cursor: pointer;
 }
 
 .back-button:active {
-    transform: scale(0.97);
+    transform: scale(0.96);
 }
 
 .call-info {
@@ -723,27 +816,30 @@ button:disabled {
 
     min-width: 0;
 
-    margin-left: 12px;
+    margin-left: 10px;
 }
 
 .call-info strong {
     display: block;
+
+    color: #f5f7fa;
+
     font-size: 13px;
 }
 
 .call-info span {
     display: block;
 
-    margin-top: 3px;
+    margin-top: 2px;
 
-    color: #737b8a;
+    color: #737d8d;
 
     font-size: 10px;
 }
 
 .meet-container {
     width: 100%;
-    height: calc(100% - 58px);
+    height: calc(100% - 56px);
 
     overflow: hidden;
 }
@@ -765,59 +861,66 @@ button:disabled {
     align-items: center;
     justify-content: center;
 
-    padding: 20px;
+    padding: 18px;
 
-    background: rgba(0, 0, 0, 0.78);
+    background: rgba(0, 0, 0, 0.80);
 
-    backdrop-filter: blur(7px);
-    -webkit-backdrop-filter: blur(7px);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
 
 /* =========================================================
-   INCOMING
+   INCOMING CALL
 ========================================================= */
 
 .incoming-call-card {
     width: 100%;
-    max-width: 360px;
+    max-width: 350px;
 
-    padding: 28px 22px;
+    padding: 27px 21px;
 
-    border: 1px solid #303746;
+    border: 1px solid #303949;
     border-radius: 20px;
 
-    background: #11151d;
+    background:
+        linear-gradient(
+            180deg,
+            #131821,
+            #0e1219
+        );
 
     box-shadow:
-        0 25px 80px rgba(0, 0, 0, 0.65);
+        0 25px 80px rgba(0, 0, 0, 0.7);
 
     text-align: center;
 }
 
 .incoming-icon {
-    width: 68px;
-    height: 68px;
+    width: 66px;
+    height: 66px;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
-    margin: 0 auto 16px;
+    margin: 0 auto 15px;
 
     border: 1px solid #166534;
     border-radius: 50%;
 
     background: #052e16;
 
-    font-size: 29px;
+    font-size: 28px;
 }
 
 .incoming-title {
-    margin-bottom: 7px;
+    margin-bottom: 6px;
 
-    font-size: 21px;
-    font-weight: 700;
+    color: #ffffff;
+
+    font-size: 20px;
+    font-weight: 800;
 }
 
 .incoming-name {
@@ -830,7 +933,7 @@ button:disabled {
     color: #60a5fa;
 
     font-size: 17px;
-    font-weight: 700;
+    font-weight: 800;
 
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -839,30 +942,28 @@ button:disabled {
 .incoming-subtitle {
     margin-top: 5px;
 
-    color: #8992a2;
+    color: #8791a1;
 
-    font-size: 13px;
+    font-size: 12px;
 }
 
 .incoming-actions {
     display: flex;
 
-    gap: 10px;
+    gap: 9px;
 
-    margin-top: 25px;
+    margin-top: 23px;
 }
 
 .incoming-actions button {
     flex: 1;
 
-    height: 48px;
+    height: 47px;
 
     border-radius: 10px;
 
-    font-size: 14px;
-    font-weight: 700;
-
-    cursor: pointer;
+    font-size: 13px;
+    font-weight: 800;
 }
 
 .accept-button {
@@ -877,9 +978,9 @@ button:disabled {
 }
 
 .decline-button {
-    border: 1px solid #3a414e;
+    border: 1px solid #3a424f;
 
-    background: #1a1e27;
+    background: #191e27;
     color: #ffffff;
 }
 
@@ -890,44 +991,51 @@ button:disabled {
 
 .calling-card {
     width: 100%;
-    max-width: 340px;
+    max-width: 335px;
 
-    padding: 30px 22px;
+    padding: 29px 21px;
 
-    border: 1px solid #2b313e;
+    border: 1px solid #2b3340;
     border-radius: 20px;
 
-    background: #11151d;
+    background:
+        linear-gradient(
+            180deg,
+            #131821,
+            #0e1219
+        );
 
     text-align: center;
 
     box-shadow:
-        0 25px 80px rgba(0, 0, 0, 0.65);
+        0 25px 80px rgba(0, 0, 0, 0.7);
 }
 
 .calling-icon {
-    width: 68px;
-    height: 68px;
+    width: 66px;
+    height: 66px;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
-    margin: 0 auto 17px;
+    margin: 0 auto 16px;
 
     border: 1px solid #1e40af;
     border-radius: 50%;
 
     background: #172554;
 
-    font-size: 29px;
+    font-size: 28px;
 }
 
 .calling-title {
-    margin-bottom: 7px;
+    margin-bottom: 6px;
 
-    font-size: 21px;
-    font-weight: 700;
+    color: #ffffff;
+
+    font-size: 20px;
+    font-weight: 800;
 }
 
 .calling-name {
@@ -940,7 +1048,7 @@ button:disabled {
     color: #60a5fa;
 
     font-size: 17px;
-    font-weight: 700;
+    font-weight: 800;
 
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -949,9 +1057,9 @@ button:disabled {
 .calling-subtitle {
     margin-top: 6px;
 
-    color: #8992a2;
+    color: #8791a1;
 
-    font-size: 13px;
+    font-size: 12px;
 }
 
 
@@ -963,22 +1071,22 @@ button:disabled {
     width: 100%;
     height: 46px;
 
-    margin-top: 25px;
+    margin-top: 23px;
 
-    border: 1px solid #3a414e;
+    border: 1px solid #3a424f;
     border-radius: 10px;
 
-    background: #1a1e27;
+    outline: none;
+
+    background: #191e27;
     color: #ffffff;
 
-    font-size: 14px;
-    font-weight: 700;
-
-    cursor: pointer;
+    font-size: 13px;
+    font-weight: 800;
 }
 
 .cancel-button:hover {
-    background: #242934;
+    background: #242a34;
 }
 
 
@@ -989,78 +1097,100 @@ button:disabled {
 @media (max-width: 600px) {
 
     .topbar {
-        padding: 0 14px;
+        height: 60px;
+        padding: 0 13px;
+    }
+
+    .logo {
+        width: 38px;
+        height: 38px;
+
+        border-radius: 10px;
+    }
+
+    .title {
+        font-size: 15px;
+    }
+
+    .subtitle {
+        font-size: 10px;
     }
 
     .home-screen {
-        justify-content: flex-start;
-        padding: 24px 14px 30px;
+        min-height: calc(100vh - 60px);
+
+        padding:
+            18px
+            13px
+            28px;
     }
 
     .hero {
-        margin-top: 15px;
+        margin-top: 3px;
+        margin-bottom: 15px;
     }
 
     .hero-icon {
-        width: 68px;
-        height: 68px;
+        width: 58px;
+        height: 58px;
 
-        margin-bottom: 16px;
+        margin-bottom: 11px;
 
-        border-radius: 20px;
+        border-radius: 17px;
 
-        font-size: 30px;
+        font-size: 26px;
     }
 
     .hero h1 {
-        font-size: 27px;
+        font-size: 24px;
     }
 
     .hero p {
-        margin-bottom: 22px;
-        font-size: 13px;
+        margin-top: 7px;
+
+        font-size: 11px;
     }
 
     .card {
-        padding: 19px;
+        padding: 17px;
+
+        border-radius: 16px;
+    }
+
+    .card input {
+        height: 47px;
+    }
+
+    .online-users {
+        max-height: 310px;
+    }
+
+    .online-user-item {
+        min-height: 59px;
+
+        padding: 8px;
+    }
+
+    .online-user-avatar {
+        width: 39px;
+        height: 39px;
+    }
+
+    .online-call-button {
+        min-width: 70px;
+        height: 36px;
+    }
+
+    .notice {
+        margin-top: 11px;
     }
 
     .status {
         display: none;
     }
 
-    .online-users {
-        max-height: 320px;
-    }
-
-    .online-user-item {
-        min-height: 60px;
-        padding: 8px;
-    }
-
-    .online-user-avatar {
-        width: 40px;
-        height: 40px;
-    }
-
-    .online-call-button {
-        min-width: 64px;
-        height: 36px;
-        font-size: 11px;
-    }
-
-    .incoming-call-card,
-    .calling-card {
-        max-width: 100%;
-        border-radius: 17px;
-    }
-
-    .call-topbar {
-        padding: 0 8px;
-    }
-
-    .call-info {
-        margin-left: 8px;
+    .call-screen {
+        height: calc(100vh - 60px);
     }
 }
 
@@ -1072,24 +1202,40 @@ button:disabled {
 @media (max-width: 380px) {
 
     .home-screen {
-        padding-left: 10px;
-        padding-right: 10px;
+        padding-left: 9px;
+        padding-right: 9px;
     }
 
-    .card {
-        padding: 16px;
+    .hero {
+        margin-bottom: 12px;
     }
 
-    .hero h1 {
+    .hero-icon {
+        width: 54px;
+        height: 54px;
+
         font-size: 24px;
     }
 
+    .hero h1 {
+        font-size: 22px;
+    }
+
     .hero p {
-        font-size: 12px;
+        font-size: 10px;
+    }
+
+    .card {
+        padding: 14px;
+    }
+
+    .online-users-header {
+        margin-top: 14px;
+        padding-top: 14px;
     }
 
     .online-user-item {
-        gap: 8px;
+        gap: 7px;
     }
 
     .online-user-avatar {
@@ -1100,11 +1246,15 @@ button:disabled {
     }
 
     .online-user-name {
-        font-size: 13px;
+        font-size: 12px;
+    }
+
+    .online-user-status {
+        font-size: 9px;
     }
 
     .online-call-button {
-        min-width: 58px;
+        min-width: 62px;
 
         padding: 0 7px;
 
@@ -1113,5 +1263,23 @@ button:disabled {
 
     .incoming-actions {
         flex-direction: column;
+    }
+}
+
+
+/* =========================================================
+   SAFE AREA - ANDROID / NOTCH DEVICES
+========================================================= */
+
+@supports (padding: max(0px)) {
+
+    .topbar {
+        padding-left: max(13px, env(safe-area-inset-left));
+        padding-right: max(13px, env(safe-area-inset-right));
+    }
+
+    .home-screen {
+        padding-bottom:
+            max(28px, env(safe-area-inset-bottom));
     }
 }
