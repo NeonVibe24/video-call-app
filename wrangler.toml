@@ -21,3 +21,15 @@ binding = "ASSETS"
 # API requests go through worker.js.
 # Normal static files are served directly by Cloudflare.
 run_worker_first = ["/api/*"]
+
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+invocation_logs = true
+persist = true
+
+[observability.traces]
+enabled = false
+head_sampling_rate = 1
+persist = true
+
