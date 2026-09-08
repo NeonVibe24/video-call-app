@@ -21,7 +21,7 @@ function corsHeaders() {
             "*",
 
         "Access-Control-Allow-Methods":
-            "POST, OPTIONS",
+            "POST, OPTIONS, GET",
 
         "Access-Control-Allow-Headers":
             "Content-Type",
@@ -44,11 +44,16 @@ function json(
 ) {
 
     return new Response(
+
         JSON.stringify(data),
+
         {
             status: status,
-            headers: corsHeaders()
+
+            headers:
+                corsHeaders()
         }
+
     );
 
 }
@@ -64,11 +69,14 @@ function base64url(
 
     let bytes;
 
+
     if (
-        input instanceof Uint8Array
+        input instanceof
+        Uint8Array
     ) {
 
-        bytes = input;
+        bytes =
+            input;
 
     } else {
 
@@ -80,7 +88,9 @@ function base64url(
     }
 
 
-    let binary = "";
+    let binary =
+        "";
+
 
     const chunk =
         0x8000;
@@ -92,28 +102,32 @@ function base64url(
         i += chunk
     ) {
 
-        binary += String.fromCharCode(
-            ...bytes.subarray(
-                i,
-                Math.min(
-                    i + chunk,
-                    bytes.length
+        binary +=
+            String.fromCharCode(
+                ...bytes.subarray(
+                    i,
+                    Math.min(
+                        i + chunk,
+                        bytes.length
+                    )
                 )
-            )
-        );
+            );
 
     }
 
 
     return btoa(binary)
+
         .replace(
             /\+/g,
             "-"
         )
+
         .replace(
             /\//g,
             "_"
         )
+
         .replace(
             /=+$/,
             ""
@@ -152,8 +166,7 @@ function normalizePrivateKey(
 
 
     /*
-     * If Cloudflare Secret was pasted with literal \n
-     * convert it back to real line breaks.
+     * Convert literal \n into real new lines.
      */
 
     key =
@@ -168,27 +181,34 @@ function normalizePrivateKey(
      */
 
     if (
+
         (
             key.startsWith('"') &&
             key.endsWith('"')
-        ) ||
+        )
+
+        ||
+
         (
             key.startsWith("'") &&
             key.endsWith("'")
         )
+
     ) {
 
         key =
-            key.slice(
-                1,
-                -1
-            ).trim();
+            key
+                .slice(
+                    1,
+                    -1
+                )
+                .trim();
 
     }
 
 
     /*
-     * Normalize Windows line endings.
+     * Normalize line endings.
      */
 
     key =
@@ -225,7 +245,7 @@ function pemToArrayBuffer(
 
 
     /*
-     * JaaS should normally provide a PKCS#8 key.
+     * JaaS private key must be PKCS#8.
      */
 
     if (
@@ -241,14 +261,14 @@ function pemToArrayBuffer(
         ) {
 
             throw new Error(
-                "Private key is PKCS#1 (BEGIN RSA PRIVATE KEY). JaaS/Cloudflare Worker requires PKCS#8 (BEGIN PRIVATE KEY)."
+                "Private key is PKCS#1. Expected PKCS#8 BEGIN PRIVATE KEY."
             );
 
         }
 
 
         throw new Error(
-            "Invalid PEM format. Expected -----BEGIN PRIVATE KEY-----."
+            "Invalid PEM format. Expected BEGIN PRIVATE KEY."
         );
 
     }
@@ -261,7 +281,7 @@ function pemToArrayBuffer(
     ) {
 
         throw new Error(
-            "Private key is missing -----END PRIVATE KEY-----."
+            "Private key is missing END PRIVATE KEY."
         );
 
     }
@@ -269,14 +289,17 @@ function pemToArrayBuffer(
 
     const base64 =
         normalized
+
             .replace(
                 /-----BEGIN PRIVATE KEY-----/g,
                 ""
             )
+
             .replace(
                 /-----END PRIVATE KEY-----/g,
                 ""
             )
+
             .replace(
                 /\s/g,
                 ""
@@ -293,6 +316,7 @@ function pemToArrayBuffer(
 
 
     let binary;
+
 
     try {
 
@@ -372,13 +396,16 @@ async function importPrivateKey(
     } catch (error) {
 
         throw new Error(
+
             "PKCS#8 private key import failed: " +
+
             (
                 error &&
                 error.message
                     ? error.message
                     : String(error)
             )
+
         );
 
     }
@@ -403,12 +430,12 @@ async function createJWT(
 
 
     /*
-     * Token lifetime:
-     * 2 hours
+     * 2 hour token lifetime
      */
 
     const exp =
-        now + (60 * 60 * 2);
+        now +
+        (60 * 60 * 2);
 
 
     const userId =
@@ -416,7 +443,7 @@ async function createJWT(
 
 
     /* ========================================================
-       JWT HEADER
+       HEADER
     ======================================================== */
 
     const header = {
@@ -434,7 +461,7 @@ async function createJWT(
 
 
     /* ========================================================
-       JWT PAYLOAD
+       PAYLOAD
     ======================================================== */
 
     const payload = {
@@ -508,7 +535,7 @@ async function createJWT(
 
 
     /* ========================================================
-       ENCODE HEADER
+       ENCODE
     ======================================================== */
 
     const encodedHeader =
@@ -519,10 +546,6 @@ async function createJWT(
         );
 
 
-    /* ========================================================
-       ENCODE PAYLOAD
-    ======================================================== */
-
     const encodedPayload =
         base64url(
             JSON.stringify(
@@ -531,10 +554,6 @@ async function createJWT(
         );
 
 
-    /* ========================================================
-       UNSIGNED JWT
-    ======================================================== */
-
     const unsignedToken =
         encodedHeader +
         "." +
@@ -542,7 +561,7 @@ async function createJWT(
 
 
     /* ========================================================
-       IMPORT PRIVATE KEY
+       IMPORT KEY
     ======================================================== */
 
     const key =
@@ -552,10 +571,11 @@ async function createJWT(
 
 
     /* ========================================================
-       SIGN JWT
+       SIGN
     ======================================================== */
 
     let signature;
+
 
     try {
 
@@ -578,30 +598,37 @@ async function createJWT(
     } catch (error) {
 
         throw new Error(
+
             "JWT signing failed: " +
+
             (
                 error &&
                 error.message
                     ? error.message
                     : String(error)
             )
+
         );
 
     }
 
 
     /* ========================================================
-       FINAL JWT
+       FINAL TOKEN
     ======================================================== */
 
     return (
+
         unsignedToken +
+
         "." +
+
         base64url(
             new Uint8Array(
                 signature
             )
         )
+
     );
 
 }
@@ -634,7 +661,9 @@ export default {
         ) {
 
             return new Response(
+
                 null,
+
                 {
                     status:
                         204,
@@ -642,6 +671,7 @@ export default {
                     headers:
                         corsHeaders()
                 }
+
             );
 
         }
@@ -663,6 +693,61 @@ export default {
 
                 service:
                     "1v1 Video Call"
+
+            });
+
+        }
+
+
+        /* ======================================================
+           DEBUG CHECK
+           
+           IMPORTANT:
+           This NEVER returns the private key.
+        ====================================================== */
+
+        if (
+            url.pathname ===
+            "/api/debug"
+        ) {
+
+            const secret =
+                env.JAAS_PRIVATE_KEY;
+
+
+            return json({
+
+                worker:
+                    "new-version",
+
+                secretConfigured:
+                    !!secret,
+
+                secretLength:
+                    secret
+                        ? secret.length
+                        : 0,
+
+                hasBeginPrivateKey:
+                    secret
+                        ? secret.includes(
+                            "BEGIN PRIVATE KEY"
+                        )
+                        : false,
+
+                hasEndPrivateKey:
+                    secret
+                        ? secret.includes(
+                            "END PRIVATE KEY"
+                        )
+                        : false,
+
+                hasRSAKey:
+                    secret
+                        ? secret.includes(
+                            "BEGIN RSA PRIVATE KEY"
+                        )
+                        : false
 
             });
 
@@ -755,11 +840,11 @@ export default {
                 String(
                     body.name || ""
                 )
-                .trim()
-                .slice(
-                    0,
-                    40
-                );
+                    .trim()
+                    .slice(
+                        0,
+                        40
+                    );
 
 
             /* ==================================================
@@ -770,15 +855,15 @@ export default {
                 String(
                     body.room || ""
                 )
-                .trim()
-                .replace(
-                    /[^a-zA-Z0-9_-]/g,
-                    ""
-                )
-                .slice(
-                    0,
-                    40
-                );
+                    .trim()
+                    .replace(
+                        /[^a-zA-Z0-9_-]/g,
+                        ""
+                    )
+                    .slice(
+                        0,
+                        40
+                    );
 
 
             /* ==================================================
@@ -818,7 +903,7 @@ export default {
 
 
             /* ==================================================
-               CREATE TOKEN
+               CREATE JWT
             ================================================== */
 
             try {
@@ -854,17 +939,10 @@ export default {
                 );
 
 
-                /*
-                 * Diagnostic information.
-                 *
-                 * This does NOT return the private key.
-                 * It only returns the error message so
-                 * we can identify the key/import problem.
-                 */
-
                 return json(
 
                     {
+
                         error:
                             "JWT generation failed.",
 
@@ -891,8 +969,6 @@ export default {
            index.html
            style.css
            app.js
-           
-           are served from Cloudflare Assets.
         ====================================================== */
 
         if (
