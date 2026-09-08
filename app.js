@@ -44,24 +44,16 @@ const connectionStatus =
 ============================================================ */
 
 const incomingCallOverlay =
-    document.getElementById(
-        "incomingCallOverlay"
-    );
+    document.getElementById("incomingCallOverlay");
 
 const incomingCallerName =
-    document.getElementById(
-        "incomingCallerName"
-    );
+    document.getElementById("incomingCallerName");
 
 const declineCallButton =
-    document.getElementById(
-        "declineCallButton"
-    );
+    document.getElementById("declineCallButton");
 
 const acceptCallButton =
-    document.getElementById(
-        "acceptCallButton"
-    );
+    document.getElementById("acceptCallButton");
 
 
 /* ============================================================
@@ -69,19 +61,13 @@ const acceptCallButton =
 ============================================================ */
 
 const callingOverlay =
-    document.getElementById(
-        "callingOverlay"
-    );
+    document.getElementById("callingOverlay");
 
 const callingReceiverName =
-    document.getElementById(
-        "callingReceiverName"
-    );
+    document.getElementById("callingReceiverName");
 
 const cancelCallButton =
-    document.getElementById(
-        "cancelCallButton"
-    );
+    document.getElementById("cancelCallButton");
 
 
 /* ============================================================
@@ -105,35 +91,25 @@ let jitsiApi = null;
 ============================================================ */
 
 let currentName = "";
-
 let currentRoom = "";
-
 let currentCallId = "";
-
 let currentCallRole = "";
-
 let currentReceiverId = "";
-
 let currentReceiverName = "";
 
 let incomingCall = null;
-
 let incomingCallVisible = false;
 
 let callStatusTimer = null;
-
 let incomingCallTimer = null;
 
 let presenceTimer = null;
-
 let onlineUsersTimer = null;
 
 let presenceBusy = false;
-
 let usersPollBusy = false;
 
 let leavingJitsi = false;
-
 let nameUpdateTimer = null;
 
 
@@ -163,8 +139,7 @@ function getUserId() {
 
         if (
             typeof crypto !== "undefined" &&
-            typeof crypto.randomUUID ===
-                "function"
+            typeof crypto.randomUUID === "function"
         ) {
 
             userId =
@@ -213,10 +188,19 @@ function saveMyName(name) {
 
     try {
 
-        localStorage.setItem(
-            "video_call_name",
-            value
-        );
+        if (value) {
+
+            localStorage.setItem(
+                "video_call_name",
+                value
+            );
+
+        } else {
+
+            localStorage.removeItem(
+                "video_call_name"
+            );
+        }
 
     } catch (_) {}
 }
@@ -224,25 +208,33 @@ function saveMyName(name) {
 
 function loadMyName() {
 
+    let saved = "";
+
     try {
 
-        const saved =
+        saved =
             localStorage.getItem(
                 "video_call_name"
             ) || "";
 
-
-        if (
-            saved &&
-            nameInput &&
-            !nameInput.value
-        ) {
-
-            nameInput.value =
-                saved;
-        }
-
     } catch (_) {}
+
+
+    saved =
+        String(saved).trim();
+
+
+    if (
+        saved &&
+        nameInput
+    ) {
+
+        nameInput.value =
+            saved;
+    }
+
+
+    return saved;
 }
 
 
@@ -288,12 +280,12 @@ function setConnectionStatus(text) {
 
 
 /* ============================================================
-   API
+   API REQUEST
 ============================================================ */
 
 async function apiRequest(
     path,
-    body,
+    body = {},
     options = {}
 ) {
 
@@ -311,9 +303,7 @@ async function apiRequest(
         },
 
         body:
-            JSON.stringify(
-                body || {}
-            )
+            JSON.stringify(body)
     };
 
 
@@ -409,10 +399,40 @@ function generatePrivateRoom() {
     }
 
 
-    return (
-        "call-" +
-        result
-    );
+    return "call-" + result;
+}
+
+
+/* ============================================================
+   CLEAR USER LIST
+============================================================ */
+
+function clearOnlineUsers() {
+
+    if (!onlineUsers) {
+        return;
+    }
+
+
+    onlineUsers.innerHTML = "";
+
+
+    if (onlineCount) {
+
+        onlineCount.textContent =
+            "0";
+    }
+
+
+    if (noUsersMessage) {
+
+        noUsersMessage.style.display =
+            "flex";
+
+        onlineUsers.appendChild(
+            noUsersMessage
+        );
+    }
 }
 
 
@@ -432,7 +452,7 @@ async function registerPresence() {
             "Offline"
         );
 
-        renderOnlineUsers([]);
+        clearOnlineUsers();
 
         return false;
     }
@@ -442,6 +462,7 @@ async function registerPresence() {
 
 
     if (presenceBusy) {
+
         return true;
     }
 
@@ -464,7 +485,21 @@ async function registerPresence() {
             );
 
 
-        if (data && data.ok) {
+        console.log(
+            "Presence online:",
+            data
+        );
+
+
+        if (
+            data &&
+            (
+                data.ok === true ||
+                data.success === true ||
+                data.status === "online" ||
+                data.user
+            )
+        ) {
 
             setConnectionStatus(
                 "Online"
@@ -474,17 +509,24 @@ async function registerPresence() {
         }
 
 
+        /*
+         * Some Workers may return 200 with
+         * a different JSON shape.
+         * A successful HTTP request is still
+         * considered registered.
+         */
+
         setConnectionStatus(
-            "Reconnecting..."
+            "Online"
         );
 
 
-        return false;
+        return true;
 
     } catch (error) {
 
         console.error(
-            "Presence error:",
+            "Presence online error:",
             error
         );
 
@@ -502,21 +544,26 @@ async function registerPresence() {
 
 
 /* ============================================================
-   POLL USERS
+   POLL ONLINE USERS
 ============================================================ */
 
 async function pollOnlineUsers() {
 
-    if (!getMyName()) {
+    const name =
+        getMyName();
 
-        renderOnlineUsers([]);
 
-        return;
+    if (!name) {
+
+        clearOnlineUsers();
+
+        return false;
     }
 
 
     if (usersPollBusy) {
-        return;
+
+        return false;
     }
 
 
@@ -535,23 +582,119 @@ async function pollOnlineUsers() {
             );
 
 
-        let users =
+        console.log(
+            "Presence poll:",
+            data
+        );
+
+
+        let users = [];
+
+
+        /*
+         * Support:
+         *
+         * { users: [] }
+         *
+         * and
+         *
+         * { onlineUsers: [] }
+         *
+         * and
+         *
+         * direct array response
+         */
+
+        if (Array.isArray(data)) {
+
+            users =
+                data;
+
+        } else if (
+            data &&
             Array.isArray(data.users)
-                ? data.users
-                : [];
+        ) {
+
+            users =
+                data.users;
+
+        } else if (
+            data &&
+            Array.isArray(data.onlineUsers)
+        ) {
+
+            users =
+                data.onlineUsers;
+        }
 
 
         users =
             users.filter(
-                user =>
-                    user &&
-                    String(
-                        user.userId || ""
-                    ) !== myUserId
+                user => {
+
+                    if (!user) {
+                        return false;
+                    }
+
+
+                    const id =
+                        String(
+                            user.userId ||
+                            user.id ||
+                            ""
+                        ).trim();
+
+
+                    if (!id) {
+                        return false;
+                    }
+
+
+                    return id !== myUserId;
+                }
             );
 
 
-        renderOnlineUsers(users);
+        /*
+         * Normalize user data.
+         */
+
+        users =
+            users.map(
+                user => {
+
+                    return {
+
+                        userId:
+                            String(
+                                user.userId ||
+                                user.id ||
+                                ""
+                            ).trim(),
+
+                        name:
+                            String(
+                                user.name ||
+                                user.username ||
+                                "User"
+                            ).trim(),
+
+                        status:
+                            String(
+                                user.status ||
+                                "online"
+                            ).toLowerCase()
+                    };
+                }
+            );
+
+
+        renderOnlineUsers(
+            users
+        );
+
+
+        return true;
 
     } catch (error) {
 
@@ -559,6 +702,13 @@ async function pollOnlineUsers() {
             "Online users error:",
             error
         );
+
+        /*
+         * Don't erase the existing list
+         * when one poll temporarily fails.
+         */
+
+        return false;
 
     } finally {
 
@@ -568,36 +718,61 @@ async function pollOnlineUsers() {
 
 
 /* ============================================================
-   RENDER USERS
+   RENDER ONLINE USERS
 ============================================================ */
 
 function renderOnlineUsers(users) {
 
     if (!onlineUsers) {
+
+        console.error(
+            "ERROR: #onlineUsers not found in HTML."
+        );
+
         return;
     }
-
-
-    onlineUsers.innerHTML = "";
 
 
     const list =
         Array.isArray(users)
             ? users.filter(
-                user =>
-                    user &&
-                    user.userId &&
-                    String(
-                        user.userId
-                    ) !== myUserId
+                user => {
+
+                    if (!user) {
+                        return false;
+                    }
+
+
+                    const id =
+                        String(
+                            user.userId ||
+                            ""
+                        ).trim();
+
+
+                    return (
+                        id &&
+                        id !== myUserId
+                    );
+                }
             )
             : [];
+
+
+    /*
+     * Clear only after we have received
+     * a valid poll result.
+     */
+
+    onlineUsers.innerHTML = "";
 
 
     if (onlineCount) {
 
         onlineCount.textContent =
-            String(list.length);
+            String(
+                list.length
+            );
     }
 
 
@@ -611,196 +786,240 @@ function renderOnlineUsers(users) {
             onlineUsers.appendChild(
                 noUsersMessage
             );
+
+        } else {
+
+            const empty =
+                document.createElement(
+                    "div"
+                );
+
+            empty.className =
+                "no-users-message";
+
+            empty.textContent =
+                "No other users online.";
+
+            onlineUsers.appendChild(
+                empty
+            );
         }
+
 
         return;
     }
 
 
-    list.forEach(user => {
+    if (noUsersMessage) {
 
-        const userId =
-            String(
-                user.userId
+        noUsersMessage.style.display =
+            "none";
+    }
+
+
+    list.forEach(
+        user => {
+
+            const userId =
+                String(
+                    user.userId
+                ).trim();
+
+
+            const userName =
+                String(
+                    user.name ||
+                    "User"
+                ).trim();
+
+
+            const isBusy =
+                String(
+                    user.status ||
+                    "online"
+                ).toLowerCase() ===
+                "busy";
+
+
+            const item =
+                document.createElement(
+                    "div"
+                );
+
+
+            item.className =
+                "online-user-item";
+
+
+            const info =
+                document.createElement(
+                    "div"
+                );
+
+
+            info.className =
+                "online-user-info";
+
+
+            const avatar =
+                document.createElement(
+                    "div"
+                );
+
+
+            avatar.className =
+                "online-user-avatar";
+
+
+            avatar.textContent =
+                getInitial(
+                    userName
+                );
+
+
+            const details =
+                document.createElement(
+                    "div"
+                );
+
+
+            const name =
+                document.createElement(
+                    "div"
+                );
+
+
+            name.className =
+                "online-user-name";
+
+
+            name.textContent =
+                userName;
+
+
+            const status =
+                document.createElement(
+                    "div"
+                );
+
+
+            status.className =
+                "online-user-status";
+
+
+            const dot =
+                document.createElement(
+                    "span"
+                );
+
+
+            dot.className =
+                "online-status-dot";
+
+
+            const statusText =
+                document.createElement(
+                    "span"
+                );
+
+
+            if (isBusy) {
+
+                status.classList.add(
+                    "busy"
+                );
+
+                dot.classList.add(
+                    "busy"
+                );
+
+                statusText.textContent =
+                    "Busy";
+
+            } else {
+
+                statusText.textContent =
+                    "Online";
+            }
+
+
+            status.appendChild(
+                dot
+            );
+
+            status.appendChild(
+                statusText
             );
 
 
-        const userName =
-            String(
-                user.name ||
-                "User"
+            details.appendChild(
+                name
+            );
+
+            details.appendChild(
+                status
             );
 
 
-        const isBusy =
-            String(
-                user.status ||
-                "online"
-            ).toLowerCase() ===
-            "busy";
+            info.appendChild(
+                avatar
+            );
 
-
-        const item =
-            document.createElement(
-                "div"
+            info.appendChild(
+                details
             );
 
 
-        item.className =
-            "online-user-item";
+            const button =
+                document.createElement(
+                    "button"
+                );
 
 
-        const info =
-            document.createElement(
-                "div"
+            button.type =
+                "button";
+
+
+            button.className =
+                "online-call-button";
+
+
+            button.dataset.userId =
+                userId;
+
+
+            button.dataset.userName =
+                userName;
+
+
+            button.textContent =
+                isBusy
+                    ? "Busy"
+                    : "Call";
+
+
+            if (isBusy) {
+
+                button.classList.add(
+                    "busy"
+                );
+            }
+
+
+            item.appendChild(
+                info
+            );
+
+            item.appendChild(
+                button
             );
 
 
-        info.className =
-            "online-user-info";
-
-
-        const avatar =
-            document.createElement(
-                "div"
+            onlineUsers.appendChild(
+                item
             );
-
-
-        avatar.className =
-            "online-user-avatar";
-
-
-        avatar.textContent =
-            getInitial(
-                userName
-            );
-
-
-        const details =
-            document.createElement(
-                "div"
-            );
-
-
-        const name =
-            document.createElement(
-                "div"
-            );
-
-
-        name.className =
-            "online-user-name";
-
-
-        name.textContent =
-            userName;
-
-
-        const status =
-            document.createElement(
-                "div"
-            );
-
-
-        status.className =
-            "online-user-status";
-
-
-        const dot =
-            document.createElement(
-                "span"
-            );
-
-
-        dot.className =
-            "online-status-dot";
-
-
-        const statusText =
-            document.createElement(
-                "span"
-            );
-
-
-        if (isBusy) {
-
-            status.classList.add(
-                "busy"
-            );
-
-            dot.classList.add(
-                "busy"
-            );
-
-            statusText.textContent =
-                "Busy";
-
-        } else {
-
-            statusText.textContent =
-                "Online";
         }
-
-
-        status.appendChild(dot);
-
-        status.appendChild(
-            statusText
-        );
-
-
-        details.appendChild(name);
-
-        details.appendChild(status);
-
-
-        info.appendChild(avatar);
-
-        info.appendChild(details);
-
-
-        const button =
-            document.createElement(
-                "button"
-            );
-
-
-        button.type =
-            "button";
-
-
-        button.className =
-            "online-call-button";
-
-
-        button.dataset.userId =
-            userId;
-
-
-        button.dataset.userName =
-            userName;
-
-
-        button.textContent =
-            isBusy
-                ? "Busy"
-                : "Call";
-
-
-        if (isBusy) {
-
-            button.classList.add(
-                "busy"
-            );
-        }
-
-
-        item.appendChild(info);
-
-        item.appendChild(button);
-
-        onlineUsers.appendChild(item);
-    });
+    );
 }
 
 
@@ -872,14 +1091,19 @@ if (onlineUsers) {
 
 
 /* ============================================================
-   REFRESH
+   REFRESH USERS
 ============================================================ */
 
 async function refreshOnlineUsers() {
 
-    await registerPresence();
+    const ok =
+        await registerPresence();
 
-    await pollOnlineUsers();
+
+    if (ok) {
+
+        await pollOnlineUsers();
+    }
 }
 
 
@@ -900,13 +1124,25 @@ if (refreshUsersButton) {
 
                 await refreshOnlineUsers();
 
+            } catch (error) {
+
+                console.error(
+                    "Refresh users error:",
+                    error
+                );
+
             } finally {
 
                 setTimeout(
                     () => {
 
-                        refreshUsersButton.disabled =
-                            false;
+                        if (
+                            refreshUsersButton
+                        ) {
+
+                            refreshUsersButton.disabled =
+                                false;
+                        }
 
                     },
                     500
@@ -938,7 +1174,7 @@ async function updateMyPresence() {
         } catch (_) {}
 
 
-        renderOnlineUsers([]);
+        clearOnlineUsers();
 
         setConnectionStatus(
             "Offline"
@@ -950,9 +1186,15 @@ async function updateMyPresence() {
 
     saveMyName(name);
 
-    await registerPresence();
 
-    await pollOnlineUsers();
+    const ok =
+        await registerPresence();
+
+
+    if (ok) {
+
+        await pollOnlineUsers();
+    }
 }
 
 
@@ -970,9 +1212,21 @@ if (nameInput) {
             nameUpdateTimer =
                 setTimeout(
                     updateMyPresence,
-                    500
+                    400
                 );
         }
+    );
+
+
+    nameInput.addEventListener(
+        "change",
+        updateMyPresence
+    );
+
+
+    nameInput.addEventListener(
+        "blur",
+        updateMyPresence
     );
 }
 
@@ -981,13 +1235,16 @@ if (nameInput) {
    START PRESENCE
 ============================================================ */
 
-function startPresence() {
+async function startPresence() {
 
     if (presenceTimer) {
 
         clearInterval(
             presenceTimer
         );
+
+        presenceTimer =
+            null;
     }
 
 
@@ -996,25 +1253,94 @@ function startPresence() {
         clearInterval(
             onlineUsersTimer
         );
+
+        onlineUsersTimer =
+            null;
     }
 
 
-    registerPresence()
-        .then(
-            pollOnlineUsers
+    const savedName =
+        loadMyName();
+
+
+    if (!savedName) {
+
+        setConnectionStatus(
+            "Offline"
         );
 
+        clearOnlineUsers();
+
+        return;
+    }
+
+
+    /*
+     * IMPORTANT:
+     *
+     * Register first.
+     * Only after successful registration
+     * poll the online users.
+     */
+
+    const registered =
+        await registerPresence();
+
+
+    if (registered) {
+
+        await pollOnlineUsers();
+    }
+
+
+    /*
+     * Heartbeat.
+     *
+     * Every 8 seconds tell Worker that
+     * this user is still online.
+     */
 
     presenceTimer =
         setInterval(
-            registerPresence,
+            async () => {
+
+                const ok =
+                    await registerPresence();
+
+
+                if (ok) {
+
+                    /*
+                     * Also refresh the user list
+                     * after heartbeat.
+                     */
+
+                    await pollOnlineUsers();
+                }
+
+            },
             8000
         );
 
 
+    /*
+     * Independent user-list refresh.
+     */
+
     onlineUsersTimer =
         setInterval(
-            pollOnlineUsers,
+            async () => {
+
+                if (
+                    !presenceBusy &&
+                    !usersPollBusy &&
+                    getMyName()
+                ) {
+
+                    await pollOnlineUsers();
+                }
+
+            },
             2500
         );
 }
@@ -1135,8 +1461,10 @@ async function pollIncomingCalls() {
             calls.find(
                 item =>
                     item &&
-                    item.receiverId ===
-                        myUserId &&
+                    String(
+                        item.receiverId ||
+                        ""
+                    ) === myUserId &&
                     item.status ===
                         "ringing"
             );
@@ -1255,11 +1583,22 @@ async function acceptIncomingCall() {
         incomingCall;
 
 
-    acceptCallButton.disabled =
-        true;
+    if (
+        acceptCallButton
+    ) {
 
-    declineCallButton.disabled =
-        true;
+        acceptCallButton.disabled =
+            true;
+    }
+
+
+    if (
+        declineCallButton
+    ) {
+
+        declineCallButton.disabled =
+            true;
+    }
 
 
     try {
@@ -1335,11 +1674,22 @@ async function acceptIncomingCall() {
 
     } finally {
 
-        acceptCallButton.disabled =
-            false;
+        if (
+            acceptCallButton
+        ) {
 
-        declineCallButton.disabled =
-            false;
+            acceptCallButton.disabled =
+                false;
+        }
+
+
+        if (
+            declineCallButton
+        ) {
+
+            declineCallButton.disabled =
+                false;
+        }
     }
 }
 
@@ -1368,11 +1718,22 @@ async function declineIncomingCall() {
         incomingCall;
 
 
-    acceptCallButton.disabled =
-        true;
+    if (
+        acceptCallButton
+    ) {
 
-    declineCallButton.disabled =
-        true;
+        acceptCallButton.disabled =
+            true;
+    }
+
+
+    if (
+        declineCallButton
+    ) {
+
+        declineCallButton.disabled =
+            true;
+    }
 
 
     try {
@@ -1400,11 +1761,22 @@ async function declineIncomingCall() {
         hideIncomingCall();
 
 
-        acceptCallButton.disabled =
-            false;
+        if (
+            acceptCallButton
+        ) {
 
-        declineCallButton.disabled =
-            false;
+            acceptCallButton.disabled =
+                false;
+        }
+
+
+        if (
+            declineCallButton
+        ) {
+
+            declineCallButton.disabled =
+                false;
+        }
 
 
         await pollOnlineUsers();
@@ -1453,7 +1825,12 @@ async function callUser(
             "Please enter your name first."
         );
 
-        nameInput.focus();
+
+        if (nameInput) {
+
+            nameInput.focus();
+        }
+
 
         return;
     }
@@ -1499,11 +1876,6 @@ async function callUser(
     currentReceiverName =
         receiverName;
 
-
-    /*
-     * Room is generated automatically.
-     * User never sees or enters it.
-     */
 
     const privateRoom =
         generatePrivateRoom();
@@ -1575,7 +1947,6 @@ async function callUser(
 
 
         startOutgoingCallStatusPolling();
-
 
     } catch (error) {
 
@@ -2123,7 +2494,6 @@ async function startJaaSCall(
             }
         );
 
-
     } catch (error) {
 
         console.error(
@@ -2173,10 +2543,6 @@ async function leaveCall() {
 
     stopOutgoingCallStatusPolling();
 
-
-    /*
-     * Caller can cancel through current backend.
-     */
 
     if (
         callId &&
@@ -2277,13 +2643,9 @@ function disposeJitsi() {
 function resetCallState() {
 
     currentCallId = "";
-
     currentCallRole = "";
-
     currentRoom = "";
-
     currentReceiverId = "";
-
     currentReceiverName = "";
 
 
@@ -2362,12 +2724,56 @@ if (backButton) {
    INITIALIZE
 ============================================================ */
 
-loadMyName();
+(async function initialize() {
 
-startPresence();
+    console.log(
+        "===================================="
+    );
 
-startIncomingCallPolling();
+    console.log(
+        "1v1 Video Call initializing..."
+    );
 
+    console.log(
+        "My User ID:",
+        myUserId
+    );
+
+
+    const savedName =
+        loadMyName();
+
+
+    console.log(
+        "Saved Name:",
+        savedName
+    );
+
+
+    /*
+     * Start presence only after DOM is ready.
+     */
+
+    await startPresence();
+
+
+    /*
+     * Incoming calls.
+     */
+
+    startIncomingCallPolling();
+
+
+    console.log(
+        "1v1 Video Call initialized."
+    );
+
+    console.log(
+        "Online presence started."
+    );
+
+})();
+    
 
 /* ============================================================
    DEBUG
@@ -2376,11 +2782,17 @@ startIncomingCallPolling();
 window.getMyUserId =
     () => myUserId;
 
+
 window.getMyName =
     () => getMyName();
 
+
 window.testPresence =
     async () => {
+
+        console.log(
+            "========== PRESENCE TEST =========="
+        );
 
         console.log(
             "MY USER ID:",
@@ -2392,26 +2804,33 @@ window.testPresence =
             getMyName()
         );
 
-        await registerPresence();
+        console.log(
+            "API:",
+            API
+        );
 
-        await pollOnlineUsers();
+
+        const registered =
+            await registerPresence();
+
 
         console.log(
-            "Presence test complete."
+            "REGISTER RESULT:",
+            registered
+        );
+
+
+        const polled =
+            await pollOnlineUsers();
+
+
+        console.log(
+            "POLL RESULT:",
+            polled
+        );
+
+
+        console.log(
+            "===================================="
         );
     };
-
-
-console.log(
-    "1v1 Video Call initialized."
-);
-
-console.log(
-    "My User ID:",
-    myUserId
-);
-
-console.log(
-    "My Name:",
-    getMyName()
-);
