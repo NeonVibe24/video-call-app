@@ -52,6 +52,7 @@ function json(
 
             headers:
                 corsHeaders()
+
         }
 
     );
@@ -367,6 +368,7 @@ async function importPrivateKey(
 
                 hash:
                     "SHA-256"
+
             },
 
             false,
@@ -412,10 +414,6 @@ async function createJWT(
             Date.now() / 1000
         );
 
-
-    /*
-     * 2 hour token lifetime
-     */
 
     const exp =
         now +
@@ -714,6 +712,7 @@ export default {
 
                     headers:
                         corsHeaders()
+
                 }
 
             );
@@ -722,7 +721,7 @@ export default {
 
 
         /* ======================================================
-           HEALTH CHECK
+           HEALTH
         ====================================================== */
 
         if (
@@ -747,10 +746,7 @@ export default {
 
 
         /* ======================================================
-           DEBUG CHECK
-           
-           IMPORTANT:
-           This NEVER returns the private key.
+           DEBUG
         ====================================================== */
 
         if (
@@ -806,8 +802,6 @@ export default {
 
         /* ======================================================
            CREATE CALL
-           
-           Caller -> Receiver
         ====================================================== */
 
         if (
@@ -821,14 +815,11 @@ export default {
             ) {
 
                 return json(
-
                     {
                         error:
                             "Method not allowed."
                     },
-
                     405
-
                 );
 
             }
@@ -844,9 +835,7 @@ export default {
 
 
         /* ======================================================
-           POLL INCOMING CALL
-           
-           Receiver checks for new calls.
+           POLL CALL
         ====================================================== */
 
         if (
@@ -860,14 +849,11 @@ export default {
             ) {
 
                 return json(
-
                     {
                         error:
                             "Method not allowed."
                     },
-
                     405
-
                 );
 
             }
@@ -883,7 +869,7 @@ export default {
 
 
         /* ======================================================
-           ACCEPT CALL
+           ACCEPT
         ====================================================== */
 
         if (
@@ -897,14 +883,11 @@ export default {
             ) {
 
                 return json(
-
                     {
                         error:
                             "Method not allowed."
                     },
-
                     405
-
                 );
 
             }
@@ -920,7 +903,7 @@ export default {
 
 
         /* ======================================================
-           DECLINE CALL
+           DECLINE
         ====================================================== */
 
         if (
@@ -934,14 +917,11 @@ export default {
             ) {
 
                 return json(
-
                     {
                         error:
                             "Method not allowed."
                     },
-
                     405
-
                 );
 
             }
@@ -957,9 +937,7 @@ export default {
 
 
         /* ======================================================
-           CANCEL CALL
-           
-           Caller cancels before receiver accepts.
+           CANCEL
         ====================================================== */
 
         if (
@@ -973,14 +951,11 @@ export default {
             ) {
 
                 return json(
-
                     {
                         error:
                             "Method not allowed."
                     },
-
                     405
-
                 );
 
             }
@@ -996,9 +971,7 @@ export default {
 
 
         /* ======================================================
-           CALL STATUS
-           
-           Caller checks whether receiver accepted/declined.
+           STATUS
         ====================================================== */
 
         if (
@@ -1012,14 +985,11 @@ export default {
             ) {
 
                 return json(
-
                     {
                         error:
                             "Method not allowed."
                     },
-
                     405
-
                 );
 
             }
@@ -1035,7 +1005,7 @@ export default {
 
 
         /* ======================================================
-           JWT ENDPOINT
+           JWT TOKEN
         ====================================================== */
 
         if (
@@ -1049,44 +1019,30 @@ export default {
             ) {
 
                 return json(
-
                     {
                         error:
                             "Method not allowed."
                     },
-
                     405
-
                 );
 
             }
 
-
-            /* ==================================================
-               PRIVATE KEY CHECK
-            ================================================== */
 
             if (
                 !env.JAAS_PRIVATE_KEY
             ) {
 
                 return json(
-
                     {
                         error:
                             "JAAS_PRIVATE_KEY secret is not configured."
                     },
-
                     500
-
                 );
 
             }
 
-
-            /* ==================================================
-               JSON BODY
-            ================================================== */
 
             let body;
 
@@ -1099,22 +1055,15 @@ export default {
             } catch (_) {
 
                 return json(
-
                     {
                         error:
                             "Invalid JSON."
                     },
-
                     400
-
                 );
 
             }
 
-
-            /* ==================================================
-               NAME
-            ================================================== */
 
             const name =
                 String(
@@ -1126,10 +1075,6 @@ export default {
                         40
                     );
 
-
-            /* ==================================================
-               ROOM
-            ================================================== */
 
             const room =
                 String(
@@ -1146,21 +1091,14 @@ export default {
                     );
 
 
-            /* ==================================================
-               VALIDATION
-            ================================================== */
-
             if (!name) {
 
                 return json(
-
                     {
                         error:
                             "Name is required."
                     },
-
                     400
-
                 );
 
             }
@@ -1169,22 +1107,15 @@ export default {
             if (!room) {
 
                 return json(
-
                     {
                         error:
                             "Room is required."
                     },
-
                     400
-
                 );
 
             }
 
-
-            /* ==================================================
-               CREATE JWT
-            ================================================== */
 
             try {
 
@@ -1220,7 +1151,6 @@ export default {
 
 
                 return json(
-
                     {
 
                         error:
@@ -1233,9 +1163,7 @@ export default {
                                 : String(error)
 
                     },
-
                     500
-
                 );
 
             }
@@ -1245,10 +1173,6 @@ export default {
 
         /* ======================================================
            STATIC ASSETS
-           
-           index.html
-           style.css
-           app.js
         ====================================================== */
 
         if (
@@ -1284,19 +1208,6 @@ export default {
 
 /* ============================================================
    DURABLE OBJECT
-   ============================================================
-
-   Handles:
-
-   - Create incoming call
-   - Poll incoming calls
-   - Accept
-   - Decline
-   - Cancel
-   - Status
-
-   D1 မလိုပါ။
-   Durable Object SQLite storage ကိုပဲ အသုံးပြုထားပါတယ်။
 ============================================================ */
 
 export class CallSignal {
@@ -1327,8 +1238,10 @@ export class CallSignal {
 
         const entries =
             await this.state.storage.list({
+
                 prefix:
                     "call:"
+
             });
 
 
@@ -1340,7 +1253,8 @@ export class CallSignal {
             if (
                 !call ||
                 !call.createdAt ||
-                now - call.createdAt >
+                now -
+                    call.createdAt >
                     (5 * 60 * 1000)
             ) {
 
@@ -1434,7 +1348,7 @@ export class CallSignal {
 
 
         /* ======================================================
-           CREATE
+           CREATE CALL
         ====================================================== */
 
         if (
@@ -1465,7 +1379,8 @@ export class CallSignal {
                 String(
                     body.callerId ||
                     ""
-                ).trim();
+                )
+                    .trim();
 
 
             const callerName =
@@ -1484,7 +1399,8 @@ export class CallSignal {
                 String(
                     body.receiverId ||
                     ""
-                ).trim();
+                )
+                    .trim();
 
 
             const receiverName =
@@ -1532,9 +1448,7 @@ export class CallSignal {
             }
 
 
-            if (
-                !callerName
-            ) {
+            if (!callerName) {
 
                 return json(
                     {
@@ -1564,9 +1478,7 @@ export class CallSignal {
             }
 
 
-            if (
-                !room
-            ) {
+            if (!room) {
 
                 return json(
                     {
@@ -1591,6 +1503,72 @@ export class CallSignal {
                     },
                     400
                 );
+
+            }
+
+
+            /* ==================================================
+               PREVENT MULTIPLE ACTIVE CALLS
+            ================================================== */
+
+            const existingEntries =
+                await this.state.storage.list({
+                    prefix:
+                        "call:"
+                });
+
+
+            for (
+                const [, existingCall]
+                of existingEntries
+            ) {
+
+                if (
+                    !existingCall
+                ) {
+
+                    continue;
+
+                }
+
+
+                const active =
+                    existingCall.status ===
+                        "ringing" ||
+
+                    existingCall.status ===
+                        "accepted";
+
+
+                if (
+                    active &&
+
+                    (
+                        existingCall.callerId ===
+                            callerId ||
+
+                        existingCall.receiverId ===
+                            callerId ||
+
+                        existingCall.callerId ===
+                            receiverId ||
+
+                        existingCall.receiverId ===
+                            receiverId
+                    )
+                ) {
+
+                    return json(
+                        {
+                            error:
+                                "One of the users is already in another call.",
+                            call:
+                                existingCall
+                        },
+                        409
+                    );
+
+                }
 
             }
 
@@ -1655,7 +1633,7 @@ export class CallSignal {
 
 
         /* ======================================================
-           POLL
+           POLL INCOMING CALLS
         ====================================================== */
 
         if (
@@ -1686,7 +1664,8 @@ export class CallSignal {
                 String(
                     body.userId ||
                     ""
-                ).trim();
+                )
+                    .trim();
 
 
             if (
@@ -1723,6 +1702,7 @@ export class CallSignal {
 
                 if (
                     call &&
+
                     call.receiverId ===
                         userId &&
 
@@ -1763,21 +1743,29 @@ export class CallSignal {
 
 
         /* ======================================================
-           FIND CALL
+           CALL ACTIONS
         ====================================================== */
 
         if (
-            action ===
-            "accept" ||
 
             action ===
-            "decline" ||
+                "accept"
+
+            ||
 
             action ===
-            "cancel" ||
+                "decline"
+
+            ||
 
             action ===
-            "status"
+                "cancel"
+
+            ||
+
+            action ===
+                "status"
+
         ) {
 
             const body =
@@ -1803,14 +1791,16 @@ export class CallSignal {
                 String(
                     body.callId ||
                     ""
-                ).trim();
+                )
+                    .trim();
 
 
             const userId =
                 String(
                     body.userId ||
                     ""
-                ).trim();
+                )
+                    .trim();
 
 
             if (
@@ -1884,11 +1874,15 @@ export class CallSignal {
             ) {
 
                 if (
+
                     userId !==
-                        call.callerId &&
+                        call.callerId
+
+                    &&
 
                     userId !==
                         call.receiverId
+
                 ) {
 
                     return json(
